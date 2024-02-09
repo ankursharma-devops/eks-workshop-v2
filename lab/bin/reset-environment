@@ -79,28 +79,18 @@ if [ ! -z "$module" ]; then
   fi
 fi
 
-logmessage "Resetting the environment..."
-logmessage "Tip: Read the rest of the lab introduction while you wait!"
+#logmessage "Resetting the environment..."
+#logmessage "Tip: Read the rest of the lab introduction while you wait!"
 
-if [ -f "/eks-workshop/hooks/cleanup.sh" ]; then
-  bash /eks-workshop/hooks/cleanup.sh
-fi
+#if [ -f "/eks-workshop/hooks/cleanup.sh" ]; then
+#  bash /eks-workshop/hooks/cleanup.sh
+#fi
 
-kubectl delete pod load-generator --ignore-not-found
+#kubectl delete pod load-generator --ignore-not-found
 
-kubectl delete namespace other --ignore-not-found
+#kubectl delete namespace other --ignore-not-found
 
-kubectl apply -k $base_path --prune --all \
-  --prune-allowlist=autoscaling/v1/HorizontalPodAutoscaler \
-  --prune-allowlist=core/v1/Service \
-  --prune-allowlist=core/v1/ConfigMap \
-  --prune-allowlist=apps/v1/Deployment \
-  --prune-allowlist=apps/v1/StatefulSet \
-  --prune-allowlist=core/v1/ServiceAccount \
-  --prune-allowlist=core/v1/Secret \
-  --prune-allowlist=core/v1/PersistentVolumeClaim \
-  --prune-allowlist=scheduling.k8s.io/v1/PriorityClass \
-  --prune-allowlist=networking.k8s.io/v1/Ingress
+kubectl apply -k $base_path  
 
 logmessage "Waiting for application to become ready..."
 
@@ -117,16 +107,16 @@ export TF_VAR_eks_cluster_id="$EKS_CLUSTER_NAME"
 
 RESOURCES_PRECREATED=${RESOURCES_PRECREATED:-""}
 
-logmessage "Cleaning up previous lab infrastructure..."
+#logmessage "Cleaning up previous lab infrastructure..."
 
 tf_dir=$(realpath --relative-to="$PWD" '/eks-workshop/terraform')
 
-terraform -chdir="$tf_dir" init -upgrade
-terraform -chdir="$tf_dir" destroy --auto-approve
+#terraform -chdir="$tf_dir" init -upgrade
+#terraform -chdir="$tf_dir" destroy --auto-approve
 
-rm -rf /eks-workshop/terraform/addon*.tf
+#rm -rf /eks-workshop/terraform/addon*.tf
 
-rm -rf /eks-workshop/hooks
+#rm -rf /eks-workshop/hooks
 
 if [ ! -z "$module" ]; then
   module_path="$manifests_path/modules/$module"
@@ -197,7 +187,7 @@ if [ $EXIT_CODE -ne 0 ]; then
 fi
 
 # Recycle workload pods in case stateful pods got restarted
-kubectl delete pod -l app.kubernetes.io/created-by=eks-workshop -l app.kubernetes.io/component=service -A
+#kubectl delete pod -l app.kubernetes.io/created-by=eks-workshop -l app.kubernetes.io/component=service -A
 
 kubectl wait --for=condition=Ready --timeout=240s pods -l app.kubernetes.io/created-by=eks-workshop -A
 
