@@ -114,7 +114,7 @@ if [ ! -z "$REPOSITORY_REF" ]; then
   sudo -E bash -c "cat << EOT > /usr/local/bin/reset-environment
 #!/bin/bash
 set -e
-curl -fsSL https://raw.githubusercontent.com/${REPOSITORY_OWNER}/${REPOSITORY_NAME}/$REPOSITORY_REF/lab/bin/reset-environment | bash -s -- \$1
+curl -fsSL https://raw.githubusercontent.com/${REPOSITORY_OWNER}/${REPOSITORY_NAME}/$REPOSITORY_REF/lab/bin/reset-environment | bash -s -- '$1'
 EOT"
   sudo chmod +x /usr/local/bin/reset-environment
   sudo -E bash -c "cat << EOT > /usr/local/bin/delete-environment
