@@ -14,7 +14,7 @@ fi
 #  echo "aws cloud9 update-environment --environment-id $CLOUD9_ENVIRONMENT_ID --managed-credentials-action DISABLE &> /dev/null || true" > ~/.bashrc.d/c9.bash
 #fi
 
-USER=${USERNAME:-"ec2-user"}
+USER=${USERNAME:-$(whoami)}
 
 cat << EOT > ~/.bashrc.d/aws.bash
 export AWS_PAGER=""

@@ -19,5 +19,5 @@ source ./env_vars.sh
 #  export CLOUD9_ENVIRONMENT_ID="${EksWorkshopC9Instance}"
 #  export ANALYTICS_ENDPOINT="${AnalyticsEndpoint}"
 
-curl -fsSL https://raw.githubusercontent.com/${RepositoryOwner}/${RepositoryName}/${RepositoryRef}/lab/scripts/installer.sh | bash
-sudo -E -H bash -c "curl -fsSL https://raw.githubusercontent.com/${RepositoryOwner}/${RepositoryName}/${RepositoryRef}/lab/scripts/setup.sh | bash"
+curl -fsSL https://raw.githubusercontent.com/${REPOSITORY_OWNER}/${REPOSITORY_NAME}/${REPOSITORY_REF}/lab/scripts/installer.sh | bash
+sudo -E -H -u $(whoami) bash -c "curl -fsSL https://raw.githubusercontent.com/${REPOSITORY_OWNER}/${REPOSITORY_NAME}/${REPOSITORY_REF}/lab/scripts/setup.sh | bash"

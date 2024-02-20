@@ -51,45 +51,45 @@ download_and_verify () {
 # kubectl
 download_and_verify "https://dl.k8s.io/release/v$kubectl_version/bin/linux/amd64/kubectl" "$kubectl_checksum" "kubectl"
 chmod +x ./kubectl
-mv ./kubectl /usr/local/bin
+sudo mv ./kubectl /usr/local/bin
 
 # helm
 download_and_verify "https://get.helm.sh/helm-v$helm_version-linux-amd64.tar.gz" "$helm_checksum" "helm.tar.gz"
 tar zxf helm.tar.gz
 chmod +x linux-amd64/helm
-mv ./linux-amd64/helm /usr/local/bin
+sudo mv ./linux-amd64/helm /usr/local/bin
 rm -rf linux-amd64/ helm.tar.gz
 
 # eksctl
 download_and_verify "https://github.com/weaveworks/eksctl/releases/download/v$eksctl_version/eksctl_Linux_amd64.tar.gz" "$eksctl_checksum" "eksctl_Linux_amd64.tar.gz"
 tar zxf eksctl_Linux_amd64.tar.gz
 chmod +x eksctl
-mv ./eksctl /usr/local/bin
+sudo mv ./eksctl /usr/local/bin
 rm -rf eksctl_Linux_amd64.tar.gz
 
 # aws cli v2
 curl --location --show-error --silent "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip -o -q awscliv2.zip -d /tmp
-/tmp/aws/install --update
+sudo /tmp/aws/install --update
 rm -rf /tmp/aws awscliv2.zip
 
 # kubeseal
 download_and_verify "https://github.com/bitnami-labs/sealed-secrets/releases/download/v${kubeseal_version}/kubeseal-${kubeseal_version}-linux-amd64.tar.gz" "$kubeseal_checksum" "kubeseal.tar.gz"
 tar xfz kubeseal.tar.gz
 chmod +x kubeseal
-mv ./kubeseal /usr/local/bin
+sudo mv ./kubeseal /usr/local/bin
 rm -rf kubeseal.tar.gz
 
 # yq
 download_and_verify "https://github.com/mikefarah/yq/releases/download/v${yq_version}/yq_linux_amd64" "$yq_checksum" "yq"
 chmod +x ./yq
-mv ./yq /usr/local/bin
+sudo mv ./yq /usr/local/bin
 
 # flux
 download_and_verify "https://github.com/fluxcd/flux2/releases/download/v${flux_version}/flux_${flux_version}_linux_amd64.tar.gz" "$flux_checksum" "flux.tar.gz"
 tar zxf flux.tar.gz
 chmod +x flux
-mv ./flux /usr/local/bin
+sudo mv ./flux /usr/local/bin
 rm -rf flux.tar.gz
 
 # terraform using Yum
@@ -99,12 +99,12 @@ rm -rf flux.tar.gz
 # argocd
 download_and_verify "https://github.com/argoproj/argo-cd/releases/download/v${argocd_version}/argocd-linux-amd64" "$argocd_checksum" "argocd-linux-amd64"
 chmod +x ./argocd-linux-amd64
-mv ./argocd-linux-amd64 /usr/local/bin/argocd
+sudo mv ./argocd-linux-amd64 /usr/local/bin/argocd
 
 # ec2 instance selector
 download_and_verify "https://github.com/aws/amazon-ec2-instance-selector/releases/download/v${ec2_instance_selector_version}/ec2-instance-selector-linux-amd64" "$ec2_instance_selector_checksum" "ec2-instance-selector-linux-amd64"
 chmod +x ./ec2-instance-selector-linux-amd64
-mv ./ec2-instance-selector-linux-amd64 /usr/local/bin/ec2-instance-selector
+sudo mv ./ec2-instance-selector-linux-amd64 /usr/local/bin/ec2-instance-selector
 
 REPOSITORY_OWNER=${REPOSITORY_OWNER:-"ankursharma-devops"}
 REPOSITORY_NAME=${REPOSITORY_NAME:-"eks-workshop-v2"}
