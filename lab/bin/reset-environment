@@ -136,7 +136,7 @@ if [ ! -z "$module" ]; then
       rm -f /eks-workshop/terraform/addon_infrastructure.tf
     fi
 
-    terraform -chdir="$tf_dir" init -backend-config=backend.conf -upgrade
+    terraform -chdir="$tf_dir" init -backend-config=backend.conf -upgrade -reconfigure
     terraform -chdir="$tf_dir" apply -refresh=false --auto-approve
   fi
 
