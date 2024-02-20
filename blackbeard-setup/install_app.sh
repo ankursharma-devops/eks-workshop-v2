@@ -92,9 +92,27 @@ managed_prometheus () {
   kubectl kustomize ~/environment/eks-workshop/modules/observability/oss-metrics/adot | envsubst | kubectl apply -f-
 }
 
+ack_dynamodb () {
+  # prepare environment for ACK dynamodb controller
+  prepare-environment automation/controlplanes/ack
+  # Use IRSA to provision dynamodb
+  eksctl create iamserviceaccount --name carts-ack \
+    --namespace carts --cluster $EKS_CLUSTER_NAME \
+    --role-name ${EKS_CLUSTER_NAME}-carts-ack \
+    --attach-policy-arn $DYNAMODB_POLICY_ARN --approve
+  # create dynamodb table and update carts deployment to use ACK created dynamodb
+  kubectl kustomize ~/environment/eks-workshop/modules/automation/controlplanes/ack/dynamodb | envsubst | kubectl apply -f
+  # check deployment status
+  kubectl rollout status -n carts deployment/carts --timeout=120s
+  # check if dynamodb table created and is active
+  kubectl wait table.dynamodb.services.k8s.aws items -n carts --for=condition=ACK.ResourceSynced --timeout=15m
+  kubectl get table.dynamodb.services.k8s.aws items -n carts -ojson | yq '.status."tableStatus"'
+
+}
 
 base_application
 ingress
 controlplane_logs
 opensearch
 managed_prometheus
+ack_dynamodb
