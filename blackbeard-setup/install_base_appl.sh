@@ -1,0 +1,100 @@
+#!/bin/bash
+
+source ./env_vars.sh
+export EKS_CLUSTER_NAME=${1:-eks-workshop}
+use-cluster $EKS_CLUSTER_NAME
+
+base_application(){
+  # prepare setup for base application components deployment
+  prepare-environment introduction/getting-started
+  # deploy all base application components using kustomize
+  kubectl apply -k ~/environment/eks-workshop/base-application
+  # Wait for all pods to become ready
+  kubectl wait --for=condition=Ready --timeout=180s pods -l app.kubernetes.io/created-by=eks-workshop -A
+}
+
+ingress () {
+  # prepare environment for ingress
+  prepare-environment exposing/ingress
+  # deploy ingress for UI service
+  kubectl apply -k ~/environment/eks-workshop/modules/exposing/ingress/creating-ingress
+  # display loadBalancer URL
+  echo -e "\n\n\n#####################LoadBalancer URL to access UI service#################\n\n"
+  kubectl get ingress -n ui ui -o jsonpath="{.status.loadBalancer.ingress[*].hostname}{'\n'}"
+  echo -e "\n\n##############################################################################\n\n"
+  # wait for AWS loadBalancer to become ready
+  wait-for-lb $(kubectl get ingress -n ui ui -o jsonpath="{.status.loadBalancer.ingress[*].hostname}{'\n'}")
+}
+
+controlplane_logs () {
+  # prepare environment for enabling control plane logs to cloudwatch
+  prepare-environment observability/logging/cluster
+  # update cluster config using aws cli
+  aws eks update-cluster-config \
+      --region $AWS_REGION \
+      --name $EKS_CLUSTER_NAME \
+      --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
+  # sleep for 30 seconds
+  sleep 30
+  # wait for cluster to become active
+  aws eks wait cluster-active --name $EKS_CLUSTER_NAME
+}
+
+opensearch () {
+  # prepare environment for using opensearch and sending application logs to opensearch
+  prepare-environment observability/opensearch
+  # get env values for opensearch access
+  export OPENSEARCH_HOST=$(aws ssm get-parameter \
+        --name /eksworkshop/$EKS_CLUSTER_NAME/opensearch/host \
+        --region $AWS_REGION | jq .Parameter.Value | tr -d '"')
+
+  export OPENSEARCH_USER=$(aws ssm get-parameter \
+        --name /eksworkshop/$EKS_CLUSTER_NAME/opensearch/user  \
+        --region $AWS_REGION --with-decryption | jq .Parameter.Value | tr -d '"')
+
+  export OPENSEARCH_PASSWORD=$(aws ssm get-parameter \
+        --name /eksworkshop/$EKS_CLUSTER_NAME/opensearch/password \
+        --region $AWS_REGION --with-decryption | jq .Parameter.Value | tr -d '"')
+
+  export OPENSEARCH_DASHBOARD_FILE=~/environment/eks-workshop/modules/observability/opensearch/opensearch-dashboards.ndjson
+
+  # load pre-created dashboards to opensearch
+  curl -s https://$OPENSEARCH_HOST/_dashboards/auth/login \
+        -H 'content-type: application/json' -H 'osd-xsrf: osd-fetch' \
+        --data-raw '{"username":"'"$OPENSEARCH_USER"'","password":"'"$OPENSEARCH_PASSWORD"'"}' \
+        -c dashboards_cookie | jq .
+  curl -s -X POST https://$OPENSEARCH_HOST/_dashboards/api/saved_objects/_import?overwrite=true \
+          --form file=@$OPENSEARCH_DASHBOARD_FILE \
+          -H "osd-xsrf: true" -b dashboards_cookie | jq .
+
+  # display login URL and creds for opensearch
+  echo -e "\n\n\n############################# Opensearch URL and user########################\n\n"
+  printf "\nOpenSearch dashboard: https://%s/_dashboards/app/dashboards \nUserName: %q \nPassword: %q \n\n" \
+        "$OPENSEARCH_HOST" "$OPENSEARCH_USER" "$OPENSEARCH_PASSWORD"
+  echo -e "\n\n#############################################################################\n\n"
+
+  #Install and configure filebeat to send application logs to opensearch
+  helm repo add eks https://aws.github.io/eks-charts
+  helm upgrade fluentbit eks/aws-for-fluent-bit --install \
+      --namespace opensearch-exporter --create-namespace \
+      -f ~/environment/eks-workshop/modules/observability/opensearch/config/fluentbit-values.yaml \
+      --set="opensearch.host"="$OPENSEARCH_HOST" \
+      --set="opensearch.awsRegion"=$AWS_REGION \
+      --set="opensearch.httpUser"="$OPENSEARCH_USER" \
+      --set="opensearch.httpPasswd"="$OPENSEARCH_PASSWORD" \
+      --wait
+}
+
+managed_prometheus () {
+  # Prepare environment for AMP (Amazon managed prometheus)
+  prepare-environment observability/oss-metrics
+  # setup adot to send metrics to AMP
+  kubectl kustomize ~/environment/eks-workshop/modules/observability/oss-metrics/adot | envsubst | kubectl apply -f-
+}
+
+
+base_application
+ingress
+controlplane_logs
+opensearch
+managed_prometheus

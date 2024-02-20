@@ -4,15 +4,17 @@ set -e
 
 if [[ ! -d "~/.bashrc.d" ]]; then
   mkdir -p ~/.bashrc.d
-  
+
   touch ~/.bashrc.d/dummy.bash
 
   echo 'for file in ~/.bashrc.d/*.bash; do source "$file"; done' >> ~/.bashrc
 fi
 
-if [ ! -z "$CLOUD9_ENVIRONMENT_ID" ]; then
-  echo "aws cloud9 update-environment --environment-id $CLOUD9_ENVIRONMENT_ID --managed-credentials-action DISABLE &> /dev/null || true" > ~/.bashrc.d/c9.bash
-fi
+#if [ ! -z "$CLOUD9_ENVIRONMENT_ID" ]; then
+#  echo "aws cloud9 update-environment --environment-id $CLOUD9_ENVIRONMENT_ID --managed-credentials-action DISABLE &> /dev/null || true" > ~/.bashrc.d/c9.bash
+#fi
+
+USER=${USERNAME:-"ec2-user"}
 
 cat << EOT > ~/.bashrc.d/aws.bash
 export AWS_PAGER=""
@@ -21,8 +23,8 @@ EOT
 
 touch ~/.bashrc.d/workshop-env.bash
 
-cat << EOT > /home/ec2-user/.bashrc.d/aliases.bash
-function prepare-environment() { 
+cat << EOT > /home/${USER}/.bashrc.d/aliases.bash
+function prepare-environment() {
   bash /usr/local/bin/reset-environment \$1
   exit_code=\$?
   source ~/.bashrc.d/workshop-env.bash
@@ -47,7 +49,7 @@ RESOURCES_PRECREATED=${RESOURCES_PRECREATED:-"false"}
 
 echo "export RESOURCES_PRECREATED='${RESOURCES_PRECREATED}'" > ~/.bashrc.d/infra.bash
 
-echo "export ANALYTICS_ENDPOINT='${ANALYTICS_ENDPOINT}'" > ~/.bashrc.d/analytics.bash
+#echo "export ANALYTICS_ENDPOINT='${ANALYTICS_ENDPOINT}'" > ~/.bashrc.d/analytics.bash
 
 /usr/local/bin/kubectl completion bash >>  ~/.bashrc.d/kubectl_completion.bash
 echo "alias k=kubectl" >> ~/.bashrc.d/kubectl_completion.bash

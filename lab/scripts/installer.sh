@@ -42,11 +42,11 @@ download_and_verify () {
   rm "$out_file.sha256"
 }
 
-yum install --quiet -y findutils jq tar gzip zsh git diffutils wget \
-  tree unzip openssl gettext bash-completion python3 pip3 python3-pip \
-  amazon-linux-extras nc yum-utils
+#yum install --quiet -y findutils jq tar gzip zsh git diffutils wget \
+#  tree unzip openssl gettext bash-completion python3 pip3 python3-pip \
+#  amazon-linux-extras nc yum-utils
 
-pip3 install -q awscurl==0.28 urllib3==1.26.6
+#pip3 install -q awscurl==0.28 urllib3==1.26.6
 
 # kubectl
 download_and_verify "https://dl.k8s.io/release/v$kubectl_version/bin/linux/amd64/kubectl" "$kubectl_checksum" "kubectl"
@@ -93,8 +93,8 @@ mv ./flux /usr/local/bin
 rm -rf flux.tar.gz
 
 # terraform using Yum
-yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo && yum makecache fast
-yum -y install terraform-1.5.5-1.x86_64
+#yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo && yum makecache fast
+#yum -y install terraform-1.5.5-1.x86_64
 
 # argocd
 download_and_verify "https://github.com/argoproj/argo-cd/releases/download/v${argocd_version}/argocd-linux-amd64" "$argocd_checksum" "argocd-linux-amd64"
@@ -106,8 +106,9 @@ download_and_verify "https://github.com/aws/amazon-ec2-instance-selector/release
 chmod +x ./ec2-instance-selector-linux-amd64
 mv ./ec2-instance-selector-linux-amd64 /usr/local/bin/ec2-instance-selector
 
-REPOSITORY_OWNER=${REPOSITORY_OWNER:-"aws-samples"}
+REPOSITORY_OWNER=${REPOSITORY_OWNER:-"ankursharma-devops"}
 REPOSITORY_NAME=${REPOSITORY_NAME:-"eks-workshop-v2"}
+USER=${USERNAME:-"ec2-user"}
 
 if [ ! -z "$REPOSITORY_REF" ]; then
   cat << EOT > /usr/local/bin/reset-environment
@@ -174,4 +175,4 @@ fi
 
 mkdir -p /eks-workshop
 
-chown ec2-user /eks-workshop
+chown $USER /eks-workshop
