@@ -117,7 +117,7 @@ set -e
 curl -fsSL https://raw.githubusercontent.com/${REPOSITORY_OWNER}/${REPOSITORY_NAME}/$REPOSITORY_REF/lab/bin/reset-environment | bash -s -- \$1
 EOT"
   sudo chmod +x /usr/local/bin/reset-environment
-  sudo -E bash -c "cat << \EOT > /usr/local/bin/delete-environment
+  sudo -E bash -c "cat << EOT > /usr/local/bin/delete-environment
 #!/bin/bash
 set -e
 curl -fsSL https://raw.githubusercontent.com/${REPOSITORY_OWNER}/${REPOSITORY_NAME}/$REPOSITORY_REF/lab/bin/delete-environment | bash
@@ -165,7 +165,7 @@ set -e
 curl -fsSL https://raw.githubusercontent.com/${REPOSITORY_OWNER}/${REPOSITORY_NAME}/$REPOSITORY_REF/lab/bin/uninstall-helm-chart | bash -s -- \$@
 EOT"
   sudo chmod +x /usr/local/bin/uninstall-helm-chart
-  sudo -E bash -c "cat << \EOT > /usr/local/bin/update-ide
+  sudo -E bash -c "cat << EOT > /usr/local/bin/update-ide
 #!/bin/bash
 set -e
 curl -fsSL https://raw.githubusercontent.com/${REPOSITORY_OWNER}/${REPOSITORY_NAME}/$REPOSITORY_REF/lab/bin/update-ide | bash
