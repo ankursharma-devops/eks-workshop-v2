@@ -108,14 +108,14 @@ sudo mv ./ec2-instance-selector-linux-amd64 /usr/local/bin/ec2-instance-selector
 
 REPOSITORY_OWNER=${REPOSITORY_OWNER:-"ankursharma-devops"}
 REPOSITORY_NAME=${REPOSITORY_NAME:-"eks-workshop-v2"}
-USER=${USERNAME:-"ec2-user"}
+USER=${USERNAME:-"$(whoami)"}
 
 if [ ! -z "$REPOSITORY_REF" ]; then
-  sudo bash -c 'cat << EOT > /usr/local/bin/reset-environment
+  sudo bash -c "cat << EOT > /usr/local/bin/reset-environment
 #!/bin/bash
 set -e
 curl -fsSL https://raw.githubusercontent.com/${REPOSITORY_OWNER}/${REPOSITORY_NAME}/$REPOSITORY_REF/lab/bin/reset-environment | bash -s -- \$1
-EOT'
+EOT"
   sudo chmod +x /usr/local/bin/reset-environment
   sudo bash -c 'cat << EOT > /usr/local/bin/delete-environment
 #!/bin/bash
