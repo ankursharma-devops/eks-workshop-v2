@@ -45,6 +45,8 @@ mkdir -p /eks-workshop
 
 rm -f /home/$(whoami)/environment/eks-workshop
 
+mkdir -p /home/$(whoami)/environment/eks-workshop
+
 rm -rf $manifests_path
 
 REPOSITORY_REF=${REPOSITORY_REF:-""}
