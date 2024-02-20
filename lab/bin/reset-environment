@@ -45,7 +45,7 @@ mkdir -p /eks-workshop
 
 rm -f /home/$(whoami)/environment/eks-workshop
 
-mkdir -p /home/$(whoami)/environment/eks-workshop
+mkdir -p /home/$(whoami)/environment
 
 rm -rf $manifests_path
 

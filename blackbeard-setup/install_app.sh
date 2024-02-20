@@ -112,8 +112,8 @@ ack_dynamodb () {
 }
 
 base_application
-#ingress
-#controlplane_logs
-#opensearch
-#managed_prometheus
-#ack_dynamodb
+ingress
+controlplane_logs
+opensearch
+managed_prometheus
+ack_dynamodb
