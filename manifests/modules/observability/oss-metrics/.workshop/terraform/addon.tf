@@ -44,9 +44,9 @@ module "adot-operator" {
 
   addon_config = {
     kubernetes_version = local.eks_cluster_version
-    addon_version      = "v0.78.0-eksbuild.2"
+#    addon_version      = "v0.78.0-eksbuild.2"
     most_recent        = false
-    
+
     preserve           = false
   }
 
@@ -127,7 +127,7 @@ resource "kubernetes_config_map" "order-service-metrics-dashboard" {
       grafana_dashboard = 1
     }
   }
-  
+
   data = {
     "order-service-metrics-dashboard.json" = <<EOF
 {
@@ -473,7 +473,7 @@ dashboardProviders:
       disableDeletion: false
       editable: false
       options:
-        path: /var/lib/grafana/dashboards/orders-service    
+        path: /var/lib/grafana/dashboards/orders-service
 
 dashboardsConfigMaps:
   orders-service: "order-service-metrics-dashboard"
