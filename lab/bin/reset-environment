@@ -103,6 +103,7 @@ fi
 # Addons
 mkdir -p /eks-workshop/terraform/$module
 cp $manifests_path/.workshop/terraform/base.tf /eks-workshop/terraform/$module
+cp $manifests_path/.workshop/terraform/default_backend.conf /eks-workshop/terraform/$module
 
 export TF_VAR_eks_cluster_id="$EKS_CLUSTER_NAME"
 
@@ -136,7 +137,13 @@ if [ ! -z "$module" ]; then
       rm -f /eks-workshop/terraform/addon_infrastructure.tf
     fi
 
-    terraform -chdir="$tf_dir" init -backend-config=backend.conf -upgrade -reconfigure
+    if [ -f "/eks-workshop/terraform/$module/backend.conf" ]; then
+      BACKEND_TF="backend.conf"
+    else
+      BACKEND_TF="default_backend.conf"
+    fi
+
+    terraform -chdir="$tf_dir" init -backend-config=$BACKEND_TF -upgrade -reconfigure
     terraform -chdir="$tf_dir" apply -refresh=false --auto-approve
   fi
 
