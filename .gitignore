@@ -37,3 +37,6 @@ node_modules
 test-output
 
 terraform-resources
+
+blackbeard-setup/LICENSE
+blackbeard-setup/README.md
