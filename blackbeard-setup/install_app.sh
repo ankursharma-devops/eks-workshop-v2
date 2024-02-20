@@ -6,15 +6,18 @@ use-cluster $EKS_CLUSTER_NAME
 source ~/.bashrc.d/*.bash
 
 base_application(){
+  echo -e "\n\n####################\nDeploying base application\n\n#######################"
   # prepare setup for base application components deployment
   prepare-environment introduction/getting-started
   # deploy all base application components using kustomize
   kubectl apply -k ~/environment/eks-workshop/base-application
   # Wait for all pods to become ready
   kubectl wait --for=condition=Ready --timeout=180s pods -l app.kubernetes.io/created-by=eks-workshop -A
+  echo -e "\n\n####################\nBase application deployment completed\n\n#######################"
 }
 
 ingress () {
+  echo -e "\n\n####################\nSetup Ingress\n\n#######################"
   # prepare environment for ingress
   prepare-environment exposing/ingress
   # deploy ingress for UI service
@@ -25,9 +28,11 @@ ingress () {
   echo -e "\n\n##############################################################################\n\n"
   # wait for AWS loadBalancer to become ready
   wait-for-lb $(kubectl get ingress -n ui ui -o jsonpath="{.status.loadBalancer.ingress[*].hostname}{'\n'}")
+  echo -e "\n\n####################\nIngress setup completed\n\n#######################"
 }
 
 controlplane_logs () {
+  echo -e "\n\n####################\nUpdate EKS to send controlplane logs to cloudwatch\n\n#######################"
   # prepare environment for enabling control plane logs to cloudwatch
   prepare-environment observability/logging/cluster
   # update cluster config using aws cli
@@ -39,9 +44,11 @@ controlplane_logs () {
   sleep 30
   # wait for cluster to become active
   aws eks wait cluster-active --name $EKS_CLUSTER_NAME
+  echo -e "\n\n####################\nEKS update completed\n\n#######################"
 }
 
 opensearch () {
+  echo -e "\n\n###############\nSetup Opensearch\nThis may take up to 30 minutes\n\n#####################"
   # prepare environment for using opensearch and sending application logs to opensearch
   prepare-environment observability/opensearch
   # get env values for opensearch access
@@ -84,16 +91,20 @@ opensearch () {
       --set="opensearch.httpUser"="$OPENSEARCH_USER" \
       --set="opensearch.httpPasswd"="$OPENSEARCH_PASSWORD" \
       --wait
+  echo -e "\n\n####################\nOpensearch Setup Completed\n\n#######################"
 }
 
 managed_prometheus () {
+  echo -e "\n\n####################\nSetup observability with AMP\n\n#######################"
   # Prepare environment for AMP (Amazon managed prometheus)
   prepare-environment observability/oss-metrics
   # setup adot to send metrics to AMP
   kubectl kustomize ~/environment/eks-workshop/modules/observability/oss-metrics/adot | envsubst | kubectl apply -f-
+  echo -e "\n\n####################\nAMP setup completed\n\n#######################"
 }
 
 ack_dynamodb () {
+  echo -e "\n\n####################\nSetup managed dynamodb using ACK\n\n#######################"
   # prepare environment for ACK dynamodb controller
   prepare-environment automation/controlplanes/ack
   # Use IRSA to provision dynamodb
@@ -102,13 +113,13 @@ ack_dynamodb () {
     --role-name ${EKS_CLUSTER_NAME}-carts-ack \
     --attach-policy-arn $DYNAMODB_POLICY_ARN --approve
   # create dynamodb table and update carts deployment to use ACK created dynamodb
-  kubectl kustomize ~/environment/eks-workshop/modules/automation/controlplanes/ack/dynamodb | envsubst | kubectl apply -f
+  kubectl kustomize ~/environment/eks-workshop/modules/automation/controlplanes/ack/dynamodb | envsubst | kubectl apply -f-
   # check deployment status
   kubectl rollout status -n carts deployment/carts --timeout=120s
   # check if dynamodb table created and is active
   kubectl wait table.dynamodb.services.k8s.aws items -n carts --for=condition=ACK.ResourceSynced --timeout=15m
   kubectl get table.dynamodb.services.k8s.aws items -n carts -ojson | yq '.status."tableStatus"'
-
+  echo -e "\n\n####################\nManaged dynamodb created using ACK\n\n#######################"
 }
 
 base_application

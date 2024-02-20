@@ -77,6 +77,14 @@ if [ ! -z "$module" ]; then
   fi
 
   if [ $module = "introduction/getting-started" ]; then
+    kubectl apply -k $base_path
+
+    logmessage "Waiting for application to become ready..."
+
+    sleep 10
+
+    kubectl wait --for=condition=available --timeout=240s deployments -l app.kubernetes.io/created-by=eks-workshop -A
+    kubectl wait --for=condition=Ready --timeout=240s pods -l app.kubernetes.io/created-by=eks-workshop -A
     exit
   fi
 fi
@@ -91,15 +99,6 @@ fi
 #kubectl delete pod load-generator --ignore-not-found
 
 #kubectl delete namespace other --ignore-not-found
-
-kubectl apply -k $base_path
-
-logmessage "Waiting for application to become ready..."
-
-sleep 10
-
-kubectl wait --for=condition=available --timeout=240s deployments -l app.kubernetes.io/created-by=eks-workshop -A
-kubectl wait --for=condition=Ready --timeout=240s pods -l app.kubernetes.io/created-by=eks-workshop -A
 
 # Addons
 mkdir -p /eks-workshop/terraform
