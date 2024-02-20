@@ -21,11 +21,7 @@ terraform {
 }
 
 terraform {
-  backend "kubernetes" {
-    secret_suffix = "state"
-    config_path   = "~/.kube/config"
-    namespace     = "kube-system"
-  }
+  backend "kubernetes" {}
 }
 
 variable "eks_cluster_id" {
