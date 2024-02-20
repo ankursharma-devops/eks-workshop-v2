@@ -43,7 +43,7 @@ catch() {
 
 mkdir -p /eks-workshop
 
-rm -f /home/ec2-user/environment/eks-workshop
+rm -f /home/$(whoami)/environment/eks-workshop
 
 rm -rf $manifests_path
 
@@ -64,7 +64,7 @@ elif [ -d "/manifests" ]; then
   cp -R /manifests $manifests_path
 fi
 
-ln -s $manifests_path /home/ec2-user/environment/eks-workshop
+ln -s $manifests_path /home/$(whoami)/environment/eks-workshop
 
 if [ ! -z "$module" ]; then
   ANALYTICS_ENDPOINT=${ANALYTICS_ENDPOINT:-""}
@@ -90,7 +90,7 @@ fi
 
 #kubectl delete namespace other --ignore-not-found
 
-kubectl apply -k $base_path  
+kubectl apply -k $base_path
 
 logmessage "Waiting for application to become ready..."
 

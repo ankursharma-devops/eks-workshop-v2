@@ -3,6 +3,7 @@
 source ./env_vars.sh
 export EKS_CLUSTER_NAME=${1:-eks-workshop}
 use-cluster $EKS_CLUSTER_NAME
+source ~/.bashrc.d/*.bash
 
 base_application(){
   # prepare setup for base application components deployment
