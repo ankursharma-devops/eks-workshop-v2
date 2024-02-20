@@ -111,68 +111,68 @@ REPOSITORY_NAME=${REPOSITORY_NAME:-"eks-workshop-v2"}
 USER=${USERNAME:-"ec2-user"}
 
 if [ ! -z "$REPOSITORY_REF" ]; then
-  cat << EOT > /usr/local/bin/reset-environment
+  sudo cat << EOT > /usr/local/bin/reset-environment
 #!/bin/bash
 set -e
 curl -fsSL https://raw.githubusercontent.com/${REPOSITORY_OWNER}/${REPOSITORY_NAME}/$REPOSITORY_REF/lab/bin/reset-environment | bash -s -- \$1
 EOT
-  chmod +x /usr/local/bin/reset-environment
-  cat << EOT > /usr/local/bin/delete-environment
+  sudo chmod +x /usr/local/bin/reset-environment
+  sudo cat << EOT > /usr/local/bin/delete-environment
 #!/bin/bash
 set -e
 curl -fsSL https://raw.githubusercontent.com/${REPOSITORY_OWNER}/${REPOSITORY_NAME}/$REPOSITORY_REF/lab/bin/delete-environment | bash
 EOT
-  chmod +x /usr/local/bin/delete-environment
-  cat << EOT > /usr/local/bin/wait-for-lb
+  sudo chmod +x /usr/local/bin/delete-environment
+  sudo cat << EOT > /usr/local/bin/wait-for-lb
 #!/bin/bash
 set -e
 curl -fsSL https://raw.githubusercontent.com/${REPOSITORY_OWNER}/${REPOSITORY_NAME}/$REPOSITORY_REF/lab/bin/wait-for-lb | bash -s -- \$1
 EOT
-  chmod +x /usr/local/bin/wait-for-lb
-  cat << EOT > /usr/local/bin/use-cluster
+  sudo chmod +x /usr/local/bin/wait-for-lb
+  sudo cat << EOT > /usr/local/bin/use-cluster
 #!/bin/bash
 set -e
 curl -fsSL https://raw.githubusercontent.com/${REPOSITORY_OWNER}/${REPOSITORY_NAME}/$REPOSITORY_REF/lab/bin/use-cluster | bash -s -- \$1
 EOT
-  chmod +x /usr/local/bin/use-cluster
-  cat << EOT > /usr/local/bin/awshttp
+  sudo chmod +x /usr/local/bin/use-cluster
+  sudo cat << EOT > /usr/local/bin/awshttp
 #!/bin/bash
 set -e
 curl -fsSL https://raw.githubusercontent.com/${REPOSITORY_OWNER}/${REPOSITORY_NAME}/$REPOSITORY_REF/lab/bin/awshttp | bash -s -- \$1
 EOT
-  chmod +x /usr/local/bin/awshttp
-  cat << EOT > /usr/local/bin/delete-all-if-crd-exists
+  sudo chmod +x /usr/local/bin/awshttp
+  sudo cat << EOT > /usr/local/bin/delete-all-if-crd-exists
 #!/bin/bash
 set -e
 curl -fsSL https://raw.githubusercontent.com/${REPOSITORY_OWNER}/${REPOSITORY_NAME}/$REPOSITORY_REF/lab/bin/delete-all-if-crd-exists | bash -s -- \$@
 EOT
-  chmod +x /usr/local/bin/delete-all-if-crd-exists
-  cat << EOT > /usr/local/bin/delete-all-and-wait-if-crd-exists
+  sudo chmod +x /usr/local/bin/delete-all-if-crd-exists
+  sudo cat << EOT > /usr/local/bin/delete-all-and-wait-if-crd-exists
 #!/bin/bash
 set -e
 curl -fsSL https://raw.githubusercontent.com/${REPOSITORY_OWNER}/${REPOSITORY_NAME}/$REPOSITORY_REF/lab/bin/delete-all-and-wait-if-crd-exists | bash -s -- \$@
 EOT
-  chmod +x /usr/local/bin/delete-all-and-wait-if-crd-exists
-  cat << EOT > /usr/local/bin/delete-nodegroup
+  sudo chmod +x /usr/local/bin/delete-all-and-wait-if-crd-exists
+  sudo cat << EOT > /usr/local/bin/delete-nodegroup
 #!/bin/bash
 set -e
 curl -fsSL https://raw.githubusercontent.com/${REPOSITORY_OWNER}/${REPOSITORY_NAME}/$REPOSITORY_REF/lab/bin/delete-nodegroup | bash -s -- \$1
 EOT
-  chmod +x /usr/local/bin/delete-nodegroup
-  cat << EOT > /usr/local/bin/uninstall-helm-chart
+  sudo chmod +x /usr/local/bin/delete-nodegroup
+  sudo cat << EOT > /usr/local/bin/uninstall-helm-chart
 #!/bin/bash
 set -e
 curl -fsSL https://raw.githubusercontent.com/${REPOSITORY_OWNER}/${REPOSITORY_NAME}/$REPOSITORY_REF/lab/bin/uninstall-helm-chart | bash -s -- \$@
 EOT
-  chmod +x /usr/local/bin/uninstall-helm-chart
-  cat << EOT > /usr/local/bin/update-ide
+  sudo chmod +x /usr/local/bin/uninstall-helm-chart
+  sudo cat << EOT > /usr/local/bin/update-ide
 #!/bin/bash
 set -e
 curl -fsSL https://raw.githubusercontent.com/${REPOSITORY_OWNER}/${REPOSITORY_NAME}/$REPOSITORY_REF/lab/bin/update-ide | bash
 EOT
-  chmod +x /usr/local/bin/update-ide
+  sudo chmod +x /usr/local/bin/update-ide
 fi
 
-mkdir -p /eks-workshop
+sudo mkdir -p /eks-workshop
 
-chown $USER /eks-workshop
+sudo chown $USER /eks-workshop
