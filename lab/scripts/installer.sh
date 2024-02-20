@@ -111,7 +111,7 @@ REPOSITORY_NAME=${REPOSITORY_NAME:-"eks-workshop-v2"}
 USER=${USERNAME:-"$(whoami)"}
 
 if [ ! -z "$REPOSITORY_REF" ]; then
-  sudo bash -c "cat << EOT > /usr/local/bin/reset-environment
+  sudo -E bash -c "cat << EOT > /usr/local/bin/reset-environment
 #!/bin/bash
 set -e
 curl -fsSL https://raw.githubusercontent.com/${REPOSITORY_OWNER}/${REPOSITORY_NAME}/$REPOSITORY_REF/lab/bin/reset-environment | bash -s -- \$1
