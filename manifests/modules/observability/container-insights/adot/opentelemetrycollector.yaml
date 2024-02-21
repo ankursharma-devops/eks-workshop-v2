@@ -10,7 +10,7 @@ spec:
   tolerations:
   - effect: NoSchedule
     key: systemComponent
-    operator: Exists  
+    operator: Exists
   config: |
     extensions:
       health_check:
@@ -108,7 +108,7 @@ spec:
     processors:
       batch/metrics:
         timeout: 60s
-  
+
     exporters:
       awsemf/performance:
         namespace: ContainerInsights
@@ -191,8 +191,7 @@ spec:
         dimension_rollup_option: NoDimensionRollup
         metric_declarations:
           - dimensions: [ [pod,productId] ]
-            metric_name_selectors:
-              - "^watch_orders_total$"
+
     service:
       pipelines:
         metrics/perf:
