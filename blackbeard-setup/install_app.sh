@@ -122,9 +122,15 @@ ack_dynamodb () {
   echo -e "\n\n####################\nManaged dynamodb created using ACK\n\n#######################"
 }
 
+cloudwatch_pod_logs () {
+  # prepare environment for sending pod logs to cloudwatch
+  prepare-environment observability/logging/pods
+}
+
 base_application
 ingress
 controlplane_logs
+cloudwatch_pod_logs
 opensearch
 managed_prometheus
 ack_dynamodb
