@@ -172,10 +172,10 @@ then
 else
   base_application
   ingress
-#  controlplane_logs
-#  cloudwatch_pod_logs
-#  opensearch
+  controlplane_logs
+  cloudwatch_pod_logs
+  opensearch
 #  managed_prometheus
   cloudwatch_metrics
-#  ack_dynamodb
+  ack_dynamodb
 fi

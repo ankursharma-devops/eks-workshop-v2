@@ -6,9 +6,10 @@ module "adot-operator" {
 #    addon_version      = "v0.78.0-eksbuild.2"
 
     preserve           = false
-
+}
   addon_context = local.addon_context
 }
+
 
 module "iam_assumable_role_adot_ci" {
   source                        = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
