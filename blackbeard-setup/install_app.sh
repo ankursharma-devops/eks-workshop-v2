@@ -5,6 +5,8 @@ export EKS_CLUSTER_NAME=${1:-eks-workshop}
 use-cluster $EKS_CLUSTER_NAME
 source ~/.bashrc.d/*.bash
 
+export ACCOUNT_ID=${1:-"810918113647"}
+
 base_application(){
   echo -e "\n\n####################\nDeploying base application\n\n#######################"
   # prepare setup for base application components deployment
@@ -131,6 +133,7 @@ cloudwatch_metrics () {
   # prepare environment for sending metrics to cloudwatch
   prepare-environment observability/container-insights
   # setup ADOT to send metrics to cloudwatch
+  export ADOT_IAM_ROLE_CI="arn:aws:iam::$ACCOUNT_ID:role/eks-workshop-adot-collector"
   kubectl kustomize ~/environment/eks-workshop/modules/observability/container-insights/adot | envsubst | kubectl apply -f-
   kubectl rollout status -n other daemonset/adot-container-ci-collector --timeout=120s
 }
