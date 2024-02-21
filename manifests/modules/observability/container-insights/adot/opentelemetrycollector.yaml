@@ -191,6 +191,9 @@ spec:
         dimension_rollup_option: NoDimensionRollup
         metric_declarations:
           - dimensions: [ [pod,productId] ]
+            metric_name_selectors:
+              - "^watch_orders_total$"
+
 
     service:
       pipelines:
