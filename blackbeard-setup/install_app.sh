@@ -127,10 +127,19 @@ cloudwatch_pod_logs () {
   prepare-environment observability/logging/pods
 }
 
+cloudwatch_metrics () {
+  # prepare environment for sending metrics to cloudwatch
+  prepare-environment observability/container-insights
+  # setup ADOT to send metrics to cloudwatch
+  kubectl kustomize ~/environment/eks-workshop/modules/observability/container-insights/adot | envsubst | kubectl apply -f-
+  kubectl rollout status -n other daemonset/adot-container-ci-collector --timeout=120s
+}
+
 base_application
 ingress
 controlplane_logs
 cloudwatch_pod_logs
 opensearch
 managed_prometheus
+cloudwatch_metrics
 ack_dynamodb
