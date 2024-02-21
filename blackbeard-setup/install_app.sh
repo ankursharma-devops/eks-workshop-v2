@@ -167,9 +167,9 @@ then
     rm -rf /eks-workshop/hooks/$module
   done
   echo -e "\n############################REMVOING BASE APPLICATION \n############################\n"
-  kubectl delete -k ~/environment/eks-workshop/modules/exposing/ingress/creating-ingress
   kubectl delete -k /eks-workshop/manifests/base-application
-
+  kubectl delete -k ~/environment/eks-workshop/modules/exposing/ingress/creating-ingress
+  eksctl delete cluster --name=$EKS_CLUSTER_NAME --region=$AWS_REGION
 else
   base_application
   ingress
