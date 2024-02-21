@@ -16,7 +16,7 @@ module "iam_assumable_role_adot_ci" {
   version                       = "~> v5.5.0"
   create_role                   = true
   role_name                     = "${var.eks_cluster_id}-adot-collector-ci"
-  provider_url                  = ${data.aws_eks_cluster.eks_cluster.identity.0.oidc.0.issuer}
+  provider_url                  = data.aws_eks_cluster.eks_cluster.identity.0.oidc.0.issuer
   role_policy_arns              = ["arn:${data.aws_partition.current.partition}:iam::aws:policy/CloudWatchAgentServerPolicy"]
   oidc_fully_qualified_subjects = ["system:serviceaccount:other:adot-collector-ci"]
 
