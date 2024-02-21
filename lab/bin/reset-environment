@@ -143,7 +143,7 @@ if [ ! -z "$module" ]; then
       BACKEND_TF="default_backend.conf"
     fi
 
-    terraform -chdir="$tf_dir" init -backend-config=$BACKEND_TF -upgrade -reconfigure
+    terraform -chdir="$tf_dir" init -backend-config=$BACKEND_TF -upgrade
     terraform -chdir="$tf_dir" apply -refresh=false --auto-approve
   fi
 
