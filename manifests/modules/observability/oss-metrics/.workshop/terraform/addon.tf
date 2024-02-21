@@ -79,8 +79,7 @@ module "iam_assumable_role_adot" {
   role_name    = "${local.addon_context.eks_cluster_id}-adot-collector"
   provider_url = local.addon_context.eks_oidc_issuer_url
   role_policy_arns = [
-    "arn:${data.aws_partition.current.partition}:iam::aws:policy/AmazonPrometheusRemoteWriteAccess",
-    "arn:${data.aws_partition.current.partition}:iam::aws:policy/CloudWatchAgentServerPolicy"
+    "arn:${data.aws_partition.current.partition}:iam::aws:policy/AmazonPrometheusRemoteWriteAccess"
   ]
   oidc_fully_qualified_subjects = ["system:serviceaccount:other:adot-collector"]
 
