@@ -29,7 +29,7 @@ ingress () {
   kubectl get ingress -n ui ui -o jsonpath="{.status.loadBalancer.ingress[*].hostname}{'\n'}"
   echo -e "\n\n##############################################################################\n\n"
   # wait for AWS loadBalancer to become ready
-  wait-for-lb $(kubectl get ingress -n ui ui -o jsonpath="{.status.loadBalancer.ingress[*].hostname}{'\n'}")
+#  wait-for-lb $(kubectl get ingress -n ui ui -o jsonpath="{.status.loadBalancer.ingress[*].hostname}{'\n'}")
   echo -e "\n\n####################\nIngress setup completed\n\n#######################"
 }
 
@@ -133,7 +133,7 @@ cloudwatch_metrics () {
   # prepare environment for sending metrics to cloudwatch
   prepare-environment observability/container-insights
   # setup ADOT to send metrics to cloudwatch
-  export ADOT_IAM_ROLE_CI="arn:aws:iam::$ACCOUNT_ID:role/eks-workshop-adot-collector"
+#  export ADOT_IAM_ROLE_CI="arn:aws:iam::$ACCOUNT_ID:role/eks-workshop-adot-collector"
   kubectl kustomize ~/environment/eks-workshop/modules/observability/container-insights/adot | envsubst | kubectl apply -f-
   kubectl rollout status -n other daemonset/adot-container-ci-collector --timeout=120s
 }
@@ -141,6 +141,16 @@ cloudwatch_metrics () {
 
 if [ "$DESTROY" == "true" ]
 then
+  log_file=/eks-workshop/logs/action-$(date +%s).log
+
+  exec 7>&1
+
+  logmessage() {
+    echo "$@" >&7
+    echo "$@" >&1
+  }
+  export -f logmessage
+
   export TF_VAR_eks_cluster_id="$EKS_CLUSTER_NAME"
   #remove all installed modules
   for module in automation/controlplanes/ack observability/container-insights observability/oss-metrics observability/opensearch observability/logging/pods observability/logging/cluster exposing/ingress
@@ -156,15 +166,16 @@ then
     rm -rf /eks-workshop/hooks/$module
   done
   echo -e "\n############################REMVOING BASE APPLICATION \n############################\n"
+  kubectl delete -k ~/environment/eks-workshop/modules/exposing/ingress/creating-ingress
   kubectl delete -k /eks-workshop/manifests/base-application
 
 else
   base_application
   ingress
-  controlplane_logs
-  cloudwatch_pod_logs
-  opensearch
-  managed_prometheus
+#  controlplane_logs
+#  cloudwatch_pod_logs
+#  opensearch
+#  managed_prometheus
   cloudwatch_metrics
-  ack_dynamodb
+#  ack_dynamodb
 fi
