@@ -138,11 +138,33 @@ cloudwatch_metrics () {
   kubectl rollout status -n other daemonset/adot-container-ci-collector --timeout=120s
 }
 
-base_application
-ingress
-controlplane_logs
-cloudwatch_pod_logs
-opensearch
-managed_prometheus
-cloudwatch_metrics
-ack_dynamodb
+
+if [ "$DESTROY" == "true" ]
+then
+  export TF_VAR_eks_cluster_id="$EKS_CLUSTER_NAME"
+  #remove all installed modules
+  for module in automation/controlplanes/ack observability/container-insights observability/oss-metrics observability/opensearch observability/logging/pods observability/logging/cluster exposing/ingress
+  do
+    echo -e "\n############################REMVOING LAB MODULE: $module \n############################\n"
+    if [ -f "/eks-workshop/hooks/$module/cleanup.sh" ]; then
+      bash /eks-workshop/hooks/$module/cleanup.sh
+    fi
+    tf_dir=$(realpath --relative-to="$PWD" "/eks-workshop/terraform/$module")
+    terraform -chdir="$tf_dir" init -upgrade
+    terraform -chdir="$tf_dir" destroy --auto-approve
+    rm -rf /eks-workshop/terraform/$module/addon*.tf
+    rm -rf /eks-workshop/hooks/$module
+  done
+  echo -e "\n############################REMVOING BASE APPLICATION \n############################\n"
+  kubectl delete -k /eks-workshop/manifests/base-application
+
+else
+  base_application
+  ingress
+  controlplane_logs
+  cloudwatch_pod_logs
+  opensearch
+  managed_prometheus
+  cloudwatch_metrics
+  ack_dynamodb
+fi
