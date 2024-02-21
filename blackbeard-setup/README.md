@@ -58,7 +58,7 @@ e.g. to change REPOSITORY_REF from default value of main to stable execute, befo
 
 ### Clean up after usage
 
-To perform clean up of the resources and delete infrastructure run below command.
+To perform clean up of the resources and delete EKS cluster execute below command.
 
 ```
 DESTROY="true" bash install_app.sh
