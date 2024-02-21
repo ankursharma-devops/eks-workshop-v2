@@ -7,7 +7,7 @@ set -e
  # findutils jq tar gzip zsh git diffutils wget nc
  # tree unzip openssl gettext bash-completion python3 pip3 python3-pip
 
-source ./env_vars.sh
+source $(dirname $0)/env_vars.sh
 
 #export AWS_REGION="${AwsRegion:-us-east-1}"
 #export REPOSITORY_OWNER="${RepositoryOwner:-ankursharma-devops}"
