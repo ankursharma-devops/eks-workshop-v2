@@ -154,6 +154,7 @@ then
   export TF_VAR_eks_cluster_id="$EKS_CLUSTER_NAME"
   #remove all installed modules
   for module in automation/controlplanes/ack observability/container-insights observability/oss-metrics observability/opensearch observability/logging/pods observability/logging/cluster exposing/ingress
+#  for module in observability/container-insights
   do
     echo -e "\n############################REMVOING LAB MODULE: $module \n############################\n"
     if [ -f "/eks-workshop/hooks/$module/cleanup.sh" ]; then
@@ -175,7 +176,7 @@ else
   controlplane_logs
   cloudwatch_pod_logs
   opensearch
-#  managed_prometheus
+  managed_prometheus
   cloudwatch_metrics
   ack_dynamodb
 fi
