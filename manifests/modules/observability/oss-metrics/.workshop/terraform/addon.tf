@@ -27,14 +27,14 @@ module "aws-ebs-csi-driver" {
 #  }
 #}
 
-resource "time_sleep" "blueprints_addons_sleep" {
-  depends_on = [
-    module.eks_blueprints_addons,
-    module.aws-ebs-csi-driver
-  ]
+#resource "time_sleep" "blueprints_addons_sleep" {
+#  depends_on = [
+#    module.eks_blueprints_addons,
+#    module.aws-ebs-csi-driver
+#  ]
 
-  create_duration = "15s"
-}
+#  create_duration = "15s"
+#}
 
 module "adot-operator" {
   source = "github.com/aws-ia/terraform-aws-eks-blueprints?ref=v4.25.0//modules/kubernetes-addons/opentelemetry-operator"
