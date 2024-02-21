@@ -45,7 +45,7 @@ resource "aws_iam_policy" "carts_dynamo" {
       "Effect": "Allow",
       "Action": "dynamodb:*",
       "Resource": [
-        "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"        
+        "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"
       ]
     }
   ]
@@ -54,20 +54,21 @@ EOF
   tags   = local.tags
 }
 
-module "eks_blueprints_addons" {
-  source  = "aws-ia/eks-blueprints-addons/aws"
-  version = "1.9.2"
+# Already installed as part of ingress setup
+#module "eks_blueprints_addons" {
+#  source  = "aws-ia/eks-blueprints-addons/aws"
+#  version = "1.9.2"
 
-  enable_aws_load_balancer_controller = true
-  aws_load_balancer_controller = {
-    wait = true
-  }
+#  enable_aws_load_balancer_controller = true
+#  aws_load_balancer_controller = {
+#    wait = true
+#  }
 
-  cluster_name      = local.addon_context.eks_cluster_id
-  cluster_endpoint  = local.addon_context.aws_eks_cluster_endpoint
-  cluster_version   = local.eks_cluster_version
-  oidc_provider_arn = local.addon_context.eks_oidc_provider_arn
-}
+#  cluster_name      = local.addon_context.eks_cluster_id
+#  cluster_endpoint  = local.addon_context.aws_eks_cluster_endpoint
+#  cluster_version   = local.eks_cluster_version
+#  oidc_provider_arn = local.addon_context.eks_oidc_provider_arn
+#}
 
 output "environment" {
   value = <<EOF

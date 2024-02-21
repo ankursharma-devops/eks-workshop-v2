@@ -11,20 +11,21 @@ module "aws-ebs-csi-driver" {
   addon_context = local.addon_context
 }
 
-module "eks_blueprints_addons" {
-  source  = "aws-ia/eks-blueprints-addons/aws"
-  version = "1.9.2"
+#Already installed as part of ingress setup
+#module "eks_blueprints_addons" {
+#  source  = "aws-ia/eks-blueprints-addons/aws"
+#  version = "1.9.2"
 
-  cluster_name      = local.eks_cluster_id
-  cluster_endpoint  = local.eks_cluster_endpoint
-  cluster_version   = local.eks_cluster_version
-  oidc_provider_arn = local.eks_oidc_provider_arn
+#  cluster_name      = local.eks_cluster_id
+#  cluster_endpoint  = local.eks_cluster_endpoint
+#  cluster_version   = local.eks_cluster_version
+#  oidc_provider_arn = local.eks_oidc_provider_arn
 
-  enable_aws_load_balancer_controller = true
-  aws_load_balancer_controller = {
-    wait = true
-  }
-}
+#  enable_aws_load_balancer_controller = true
+#  aws_load_balancer_controller = {
+#    wait = true
+#  }
+#}
 
 resource "time_sleep" "blueprints_addons_sleep" {
   depends_on = [
