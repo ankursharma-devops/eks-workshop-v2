@@ -102,6 +102,10 @@ managed_prometheus () {
   prepare-environment observability/oss-metrics
   # setup adot to send metrics to AMP
   kubectl kustomize ~/environment/eks-workshop/modules/observability/oss-metrics/adot | envsubst | kubectl apply -f-
+  echo -e "\n GRAFANA INGRESS URL:"
+  kubectl get ingress -n grafana grafana -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+  echo -e "\nGRAFANA admin USER PASSWORD:\n"
+  kubectl get -n grafana secrets/grafana -o=jsonpath='{.data.admin-password}' | base64 -d
   echo -e "\n\n####################\nAMP setup completed\n\n#######################"
 }
 
