@@ -30,6 +30,20 @@ managedNodeGroups:
     minSize: 3
     maxSize: 6
     instanceType: m5.large
+    preBootstrapCommands:
+    - sudo yum install amazon-ssm-agent -y
+    - sudo systemctl enable amazon-ssm-agent
+    - sudo systemctl start amazon-ssm-agent
+    - sudo yum install amazon-cloudwatch-agent -y
+    - sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c ssm:AmazonCloudwatch-linux
+    iam:
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
     privateNetworking: true
     releaseVersion: "1.29.0-20240129"
     updateConfig:
