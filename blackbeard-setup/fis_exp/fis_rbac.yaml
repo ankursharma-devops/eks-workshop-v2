@@ -1,0 +1,44 @@
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  namespace: carts
+  name: fis-experiment
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: carts
+  name: fis-experiment
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "create", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["create", "get", "delete", "deletecollection", "list"]
+- apiGroups: [""]
+  resources: ["pods/ephemeralcontainers"]
+  verbs: ["update"]
+- apiGroups: [""]
+  resources: ["pods/exec"]
+  verbs: ["create"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: fis-experiment
+  namespace: carts
+subjects:
+- kind: ServiceAccount
+  name: fis-experiment
+  namespace: carts
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: fis-experiment
+roleRef:
+  kind: Role
+  name: fis-experiment
+  apiGroup: rbac.authorization.k8s.io
