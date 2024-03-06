@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: orders-db-ack
+  namespace: $APP_NAMESPACE
+data:
+  password: YmVhcmQhI2JsYWNrCg==
+  url: $ORDERS_DB_URL
+  username: YWRtaW4K

@@ -1,0 +1,19 @@
+apiVersion: rds.services.k8s.aws/v1alpha1
+kind: DBInstance
+metadata:
+  name: "${RDS_INSTANCE_NAME}"
+  namespace: "${APP_NAMESPACE}"
+spec:
+  allocatedStorage: 20
+  dbInstanceClass: db.t4g.micro
+  dbName: $RDS_DB_NAME
+  dbInstanceIdentifier: "${RDS_INSTANCE_NAME}"
+  dbSubnetGroupName: "${RDS_SUBNET_GROUP_NAME}"
+  vpcSecurityGroupIDs:  "${RDS_SECURITY_GROUP_ID}"
+  engine: "$DB_ENGINE"
+  engineVersion: "8.0"
+  masterUsername: "admin"
+  masterUserPassword:
+    namespace: "${APP_NAMESPACE}"
+    name: "${RDS_INSTANCE_NAME}-password"
+    key: password

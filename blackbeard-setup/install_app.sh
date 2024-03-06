@@ -49,6 +49,11 @@ controlplane_logs () {
   echo -e "\n\n####################\nEKS update completed\n\n#######################"
 }
 
+cloudwatch_pod_logs () {
+  # prepare environment for sending pod logs to cloudwatch
+  prepare-environment observability/logging/pods
+}
+
 opensearch () {
   echo -e "\n\n###############\nSetup Opensearch\nThis may take up to 30 minutes\n\n#####################"
   # prepare environment for using opensearch and sending application logs to opensearch
@@ -109,8 +114,17 @@ managed_prometheus () {
   echo -e "\n\n####################\nAMP setup completed\n\n#######################"
 }
 
+cloudwatch_metrics () {
+  # prepare environment for sending metrics to cloudwatch
+  prepare-environment observability/container-insights
+  # setup ADOT to send metrics to cloudwatch
+#  export ADOT_IAM_ROLE_CI="arn:aws:iam::$ACCOUNT_ID:role/eks-workshop-adot-collector"
+  kubectl kustomize ~/environment/eks-workshop/modules/observability/container-insights/adot | envsubst | kubectl apply -f-
+  kubectl rollout status -n other daemonset/adot-container-ci-collector --timeout=120s
+}
+
 ack_dynamodb () {
-  echo -e "\n\n####################\nSetup managed dynamodb using ACK\n\n#######################"
+  echo -e "\n\n####################\nSetup managed dynamodb using ACK operator\n\n#######################"
   # prepare environment for ACK dynamodb controller
   prepare-environment automation/controlplanes/ack
   # Use IRSA to provision dynamodb
@@ -128,18 +142,136 @@ ack_dynamodb () {
   echo -e "\n\n####################\nManaged dynamodb created using ACK\n\n#######################"
 }
 
-cloudwatch_pod_logs () {
-  # prepare environment for sending pod logs to cloudwatch
-  prepare-environment observability/logging/pods
-}
+ack_rds () {
+  echo -e "\n\n####################\nSetup RDS MYSQL instance using ACK operator\n\n#######################"
+  # generate required variables
+  RDS_NAMESPACE=rds-ack
+  RDS_SUBNET_GROUP_NAME="ack-rds-subnet-group"
+  RDS_SUBNET_GROUP_DESCRIPTION="RDS subnet group"
+  EKS_VPC_ID=$(aws eks describe-cluster --name="${EKS_CLUSTER_NAME}" --region $AWS_REGION \
+   --query "cluster.resourcesVpcConfig.vpcId" \
+   --output text)
+  EKS_SUBNET_IDS=$(aws ec2 describe-subnets --region $AWS_REGION \
+    --filters "Name=vpc-id,Values=${EKS_VPC_ID}" \
+    --query 'Subnets[*].SubnetId' \
+    --output text)
+  EKS_CIDR_RANGE=$(aws ec2 describe-vpcs \
+   --vpc-ids $EKS_VPC_ID \
+   --query "Vpcs[].CidrBlock" \
+   --output text)
+  # create namespace if not exist
+  kubectl create namespace $RDS_NAMESPACE --dry-run=client -o yaml | kubectl apply -f-
+  # Use irsa and attach role to service account in k8s
+  eksctl create iamserviceaccount --name ack-rds-controller --region $AWS_REGION \
+    --namespace $RDS_NAMESPACE --cluster $EKS_CLUSTER_NAME \
+    --role-name ${EKS_CLUSTER_NAME}-ack-rds-controller \
+    --attach-policy-arn arn:aws:iam::aws:policy/AmazonRDSFullAccess --approve
+  aws ecr-public get-login-password --region $AWS_REGION | helm registry login --username AWS --password-stdin public.ecr.aws
+  # Install ack-rds-controller using helm
+  helm install -n $RDS_NAMESPACE ack-rds oci://public.ecr.aws/aws-controllers-k8s/rds-chart --version=0.0.27 --set=aws.region=$AWS_REGION --set serviceAccount.create=false
+  # create manifest for rds subnet group
+cat <<-EOF > db-subnet-groups.yaml
+apiVersion: rds.services.k8s.aws/v1alpha1
+kind: DBSubnetGroup
+metadata:
+  name: ${RDS_SUBNET_GROUP_NAME}
+  namespace: ${RDS_NAMESPACE}
+spec:
+  name: ${RDS_SUBNET_GROUP_NAME}
+  description: ${RDS_SUBNET_GROUP_DESCRIPTION}
+  subnetIDs:
+$(printf "    - %s\n" ${EKS_SUBNET_IDS})
+EOF
+  # apply manifest
+  kubectl apply -f db-subnet-groups.yaml
+  # Wait for subnet grup to complete
+  for i in $(seq 6)
+  do
+    STATUS=$(kubectl get dbsubnetgroup $RDS_SUBNET_GROUP_NAME -ojson -n ${RDS_NAMESPACE} | jq -r '.status.subnetGroupStatus')
+    if [ $STATUS == "Complete" ]
+    then
+      break
+    else
+      echo "waiting for rds subnet group creation to complete"
+      sleep 10s
+    fi
+  done
+  # create security group and add inbound traffic rule
+  RDS_SECURITY_GROUP_ID=$(aws ec2 create-security-group --region $AWS_REGION  \
+    --group-name "${RDS_SUBNET_GROUP_NAME}" \
+    --description "${RDS_SUBNET_GROUP_DESCRIPTION}" \
+    --vpc-id "${EKS_VPC_ID}" \
+    --output text)
+  aws ec2 authorize-security-group-ingress --region $AWS_REGION \
+     --group-id "${RDS_SECURITY_GROUP_ID}" \
+     --protocol tcp \
+     --port 3306 \
+     --cidr "${EKS_CIDR_RANGE}"
+  ## create rds db instance for catalog app
+  ##
+  echo -e "###  Creating RDS postgresql for catalog app \n"
+  RDS_INSTANCE_NAME="catalog-ack-mysql"
+  APP_NAMESPACE="catalog"
+  DB_ENGINE="mysql"
+  RDS_DB_NAME="catalog"
+  # Set password for DB
+  kubectl create secret generic -n $APP_NAMESPACE "${RDS_INSTANCE_NAME}-password" \
+  --from-literal=password='beard!#black' --from-literal=username=admin
+  # create instance
+  cat ~/environment/eks-workshop/modules/ack-rds/rds-mysql.yaml | envsubst  | k apply -f-
+  # wait for rds to create and generate endpoint
+  for i in $(seq 10)
+  do
+    STATUS=$(kubectl get dbinstance $RDS_INSTANCE_NAME  -n ${APP_NAMESPACE} -o json | jq -r '.status.dbInstanceStatus')
+    if [ $STATUS == "available" ] || [ $STATUS == "backing" ]
+    then
+      break
+    else
+      echo -e "rds not active retrying....\nwaiting for rds creation to complete"
+      sleep 30s
+    fi
+  done
+  #
+  RDS_DB_ENDPOINT=$(kubectl get dbinstance $RDS_INSTANCE_NAME -n ${APP_NAMESPACE} -o json | jq -r '.status.endpoint.address')
+  cat ~/environment/eks-workshop/modules/ack-rds/catalog-patch.yaml | envsubst  | k apply -f-
+  kubectl create secret generic -n $APP_NAMESPACE "catalog-db-ack" \
+    --from-literal=password='beard!#black' --from-literal=username=admin
+  # Update catalog app to use rds
+  kubectl kustomize ~/environment/eks-workshop/modules/ack-rds/catalog-kustomize | envsubst | kubectl apply -f-
+  echo -e "### RDS for catalog app created and application updated\n"
 
-cloudwatch_metrics () {
-  # prepare environment for sending metrics to cloudwatch
-  prepare-environment observability/container-insights
-  # setup ADOT to send metrics to cloudwatch
-#  export ADOT_IAM_ROLE_CI="arn:aws:iam::$ACCOUNT_ID:role/eks-workshop-adot-collector"
-  kubectl kustomize ~/environment/eks-workshop/modules/observability/container-insights/adot | envsubst | kubectl apply -f-
-  kubectl rollout status -n other daemonset/adot-container-ci-collector --timeout=120s
+  ## create rds db instance for orders app
+  ##
+  echo -e "###  Creating RDS postgresql for orders app \n"
+  RDS_INSTANCE_NAME="orders-ack-mysql"
+  APP_NAMESPACE="orders"
+  DB_ENGINE="mysql"
+  RDS_DB_NAME="orders"
+  # set password for db
+  kubectl create secret generic -n $APP_NAMESPACE "${RDS_INSTANCE_NAME}-password" \
+  --from-literal=password='beard!#black'
+  # create instance
+  cat ~/environment/eks-workshop/modules/ack-rds/rds-mysql.yaml | envsubst  | k apply -f-
+  # wait for rds to create and generate endpoint
+  for i in $(seq 10)
+  do
+    STATUS=$(kubectl get dbinstance $RDS_INSTANCE_NAME  -n ${APP_NAMESPACE} -o json | jq -r '.status.dbInstanceStatus')
+    if [ $STATUS == "available" ] || [ $STATUS == "backing" ]
+    then
+      break
+    else
+      echo -e "rds not active retrying....\nwaiting for rds creation to complete"
+      sleep 30s
+    fi
+  done
+  #
+  RDS_DB_ENDPOINT=$(kubectl get dbinstance $RDS_INSTANCE_NAME -n ${APP_NAMESPACE} -o json | jq -r '.status.endpoint.address')
+  ORDERS_DB_URL=$(echo "jdbc:mariadb://$RDS_DB_ENDPOINT:3306/$RDS_DB_NAME" | base64 )
+  cat ~/environment/eks-workshop/modules/ack-rds/orders-patch.yaml | envsubst  | k apply -f-
+  # Update catalog app to use rds
+  kubectl kustomize ~/environment/eks-workshop/modules/ack-rds/orders-kustomize | envsubst | kubectl apply -f-
+  echo -e "### RDS for orders app created and application updated\n"
+
 }
 
 
@@ -183,4 +315,5 @@ else
   managed_prometheus
   cloudwatch_metrics
   ack_dynamodb
+  ack_rds
 fi

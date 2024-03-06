@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orders
+  namespace: orders
+spec:
+  template:
+    spec:
+      containers:
+        - name: orders
+          env:
+            - name: SPRING_DATASOURCE_WRITER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: orders-db-ack
+                  key: url
+            - name: SPRING_DATASOURCE_WRITER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: orders-db-ack
+                  key: username
+            - name: SPRING_DATASOURCE_WRITER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orders-db-ack
+                  key: password
+            - name: SPRING_DATASOURCE_READER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: orders-db-ack
+                  key: url
+            - name: SPRING_DATASOURCE_READER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: orders-db-ack
+                  key: username
+            - name: SPRING_DATASOURCE_READER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orders-db-ack
+                  key: password
