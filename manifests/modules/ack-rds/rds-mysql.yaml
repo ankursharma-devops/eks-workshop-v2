@@ -9,8 +9,8 @@ spec:
   dbName: $RDS_DB_NAME
   dbInstanceIdentifier: "${RDS_INSTANCE_NAME}"
   dbSubnetGroupName: "${RDS_SUBNET_GROUP_NAME}"
-  vpcSecurityGroupIDs:  "${RDS_SECURITY_GROUP_ID}"
-  engine: "$DB_ENGINE"
+  vpcSecurityGroupIDs:  ["${RDS_SECURITY_GROUP_ID}"]
+  engine: ${DB_ENGINE}
   engineVersion: "8.0"
   masterUsername: "admin"
   masterUserPassword:
