@@ -5,13 +5,14 @@ metadata:
   namespace: "${APP_NAMESPACE}"
 spec:
   allocatedStorage: 20
-  dbInstanceClass: db.t4g.micro
+  dbInstanceClass: db.m4.large
   dbName: $RDS_DB_NAME
+  enableCloudwatchLogsExports: ["error","general","audit","slowquery"]
   dbInstanceIdentifier: "${RDS_INSTANCE_NAME}"
   dbSubnetGroupName: "${RDS_SUBNET_GROUP_NAME}"
   vpcSecurityGroupIDs:  ["${RDS_SECURITY_GROUP_ID}"]
   engine: ${DB_ENGINE}
-  engineVersion: "8.0"
+  engineVersion: "5.7"
   masterUsername: "admin"
   masterUserPassword:
     namespace: "${APP_NAMESPACE}"

@@ -5,6 +5,6 @@ metadata:
   name: orders-db-ack
   namespace: $APP_NAMESPACE
 data:
-  password: YmVhcmQhI2JsYWNrCg==
+  password: YmVhcmQhI2JsYWNr
   url: $ORDERS_DB_URL
-  username: YWRtaW4K
+  username: YWRtaW4=
