@@ -1,0 +1,14 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "FISScheduleExperimentPP",
+            "Effect": "Allow",
+            "Action": "fis:StartExperiment",
+            "Resource": [
+                "arn:aws:fis:*:810918113647:experiment/*",
+                "arn:aws:fis:*:810918113647:experiment-template/*"
+            ]
+        }
+    ]
+}

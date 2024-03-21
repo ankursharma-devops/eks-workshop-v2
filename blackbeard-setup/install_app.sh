@@ -165,7 +165,7 @@ ack_rds () {
       --group-name "${RDS_SUBNET_GROUP_NAME}"
     ## delete rds-ack-controller
     helm delete -n $RDS_NAMESPACE ack-rds
-    # delete irsa 
+    # delete irsa
     eksctl delete iamserviceaccount --name ack-rds-controller --region $AWS_REGION \
       --cluster $EKS_CLUSTER_NAME
 

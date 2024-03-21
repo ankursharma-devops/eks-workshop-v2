@@ -1,0 +1,71 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowFISExperimentRoleSSMReadOnly",
+            "Effect": "Allow",
+            "Action": [
+                "ssm:GetAutomationExecution",
+                "ssm:ListCommands"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogDelivery"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:PutResourcePolicy",
+                "logs:DescribeResourcePolicies",
+                "logs:DescribeLogGroups"
+            ],
+            "Resource": "arn:aws:logs:*:810918113647:log-group:/aws/fis"
+        },
+        {
+            "Sid": "AllowFISExperimentRoleSSMSendCommand",
+            "Effect": "Allow",
+            "Action": [
+                "ssm:SendCommand"
+            ],
+            "Resource": [
+                "arn:aws:ec2:*:810918113647:instance/*",
+                "arn:aws:ssm:*:*:document/*"
+            ]
+        },
+        {
+            "Sid": "AllowFISExperimentRoleSSMCancelCommand",
+            "Effect": "Allow",
+            "Action": [
+                "ssm:CancelCommand"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowFISExperimentRoleSSMAutomation",
+            "Effect": "Allow",
+            "Action": [
+                "ssm:StartAutomationExecution",
+                "ssm:StopAutomationExecution"
+            ],
+            "Resource": "arn:aws:ssm:*:*:automation-definition/*"
+        },
+        {
+            "Sid": "AllowFISExperimentRoleSSMAutomationPassRole",
+            "Effect": "Allow",
+            "Action": [
+                "iam:PassRole"
+            ],
+            "Resource": "arn:aws:iam::810918113647:role/AWSFISIAMRole-*",
+            "Condition": {
+                "StringEquals": {
+                    "iam:PassedToService": "ssm.amazonaws.com"
+                }
+            }
+        }
+    ]
+}

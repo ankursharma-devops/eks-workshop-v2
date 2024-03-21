@@ -101,9 +101,9 @@ fi
 #kubectl delete namespace other --ignore-not-found
 
 # Addons
-mkdir -p /eks-workshop/terraform/$module
-cp $manifests_path/.workshop/terraform/base.tf /eks-workshop/terraform/$module
-cp $manifests_path/.workshop/terraform/default_backend.conf /eks-workshop/terraform/$module
+mkdir -p /eks-workshop/terraform/$EKS_CLUSTER_NAME/$module
+cp $manifests_path/.workshop/terraform/base.tf /eks-workshop/terraform/$EKS_CLUSTER_NAME/$module
+cp $manifests_path/.workshop/terraform/default_backend.conf /eks-workshop/terraform/$EKS_CLUSTER_NAME/$module
 
 export TF_VAR_eks_cluster_id="$EKS_CLUSTER_NAME"
 
@@ -111,7 +111,7 @@ RESOURCES_PRECREATED=${RESOURCES_PRECREATED:-""}
 
 #logmessage "Cleaning up previous lab infrastructure..."
 
-tf_dir=$(realpath --relative-to="$PWD" "/eks-workshop/terraform/$module")
+tf_dir=$(realpath --relative-to="$PWD" "/eks-workshop/terraform/$EKS_CLUSTER_NAME/$module")
 
 #terraform -chdir="$tf_dir" init -upgrade
 #terraform -chdir="$tf_dir" destroy --auto-approve
@@ -124,20 +124,20 @@ if [ ! -z "$module" ]; then
   module_path="$manifests_path/modules/$module"
 
   if [ -f "$module_path/.workshop/cleanup.sh" ]; then
-    mkdir -p /eks-workshop/hooks/$module
-    cp "$module_path/.workshop/cleanup.sh" /eks-workshop/hooks/$module
+    mkdir -p /eks-workshop/hooks/$EKS_CLUSTER_NAME/$module
+    cp "$module_path/.workshop/cleanup.sh" /eks-workshop/hooks/$EKS_CLUSTER_NAME/$module
   fi
 
   if [ -f "$module_path/.workshop/terraform/addon.tf" ]; then
     logmessage "Creating infrastructure for next lab..."
 
-    cp -R $module_path/.workshop/terraform/* /eks-workshop/terraform/$module
+    cp -R $module_path/.workshop/terraform/* /eks-workshop/terraform/$EKS_CLUSTER_NAME/$module
 
     if [ "$RESOURCES_PRECREATED" = "true" ]; then
       rm -f /eks-workshop/terraform/addon_infrastructure.tf
     fi
 
-    if [ -f "/eks-workshop/terraform/$module/backend.conf" ]; then
+    if [ -f "/eks-workshop/terraform/$EKS_CLUSTER_NAME/$module/backend.conf" ]; then
       BACKEND_TF="backend.conf"
     else
       BACKEND_TF="default_backend.conf"

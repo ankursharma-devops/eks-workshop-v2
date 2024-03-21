@@ -1,0 +1,9 @@
+apiVersion: v1
+data:
+  ENDPOINTS_ORDERS: http://orders.orders.svc:80
+  REDIS_URL: $REDIS_ENDPOINT
+kind: ConfigMap
+metadata:
+  annotations:
+  name: checkout-v1
+  namespace: checkout
