@@ -29,16 +29,18 @@ Components installed by install_app.sh script.
   - sample retail application
   - ingress for exposing ui component of sample app
   - export control plane logs to cloudwatch
-  - export application pod logs to cloudwatch
-  - create opensearch domain and send application pod logs to opensearch
-  - create amazon managed prometheus workspace and send metrics using open telemetry collector (adot operator). Installs grafana as well
-  - send container-insights metrics to aws cloudwatch using open telemetry collector (adot operator)
+  - export logs and container insights metrics to cloudwatch
+  - (DISABLED FOR NOW) create opensearch domain and send application pod logs to opensearch
+  - (DISABLED FOR NOW) create amazon managed prometheus workspace and send metrics using open telemetry collector (adot operator). Installs grafana as well
+  - (DISABLED FOR NOW)send container-insights metrics to aws cloudwatch using open telemetry collector (adot operator)
   - create dynamodb table using EKS ACK (ACK operator for dynamodb) and configure carts deployment to use aws managed dynamodb table
+  - create rds for catalog and orders using ack operator and update respective app deployments
+  - create elasticache redis and update checkout app deployment
 
 ```
 bash ./setup_machine.sh
-bash ./install_cluster.sh
-bash ./install_app.sh
+bash ./install_cluster.sh EKS_CLUSTER_NAME
+bash ./install_app.sh EKS_CLUSTER_NAME
 ```
 
 #### Changing default variables
@@ -61,5 +63,5 @@ e.g. to change REPOSITORY_REF from default value of main to stable execute, befo
 To perform clean up of the resources and delete EKS cluster execute below command.
 
 ```
-DESTROY="true" bash install_app.sh
+DESTROY="true" bash install_app.sh EKS_CLUSTER_NAME
 ```

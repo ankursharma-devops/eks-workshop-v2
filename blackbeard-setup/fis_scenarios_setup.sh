@@ -38,4 +38,8 @@ aws iam put-role-policy --role-name fis-scheduler-$AWS_REGION \
 aws scheduler create-schedule-group --name fisScheduler --region $AWS_REGION
 
 #
-aws scheduler create-schedule --region $AWS_REGION 
+aws scheduler create-schedule --region $AWS_REGION --group-name fisScheduler \
+  --name eksStressDisk --start-date  \
+  --target --schedule-expression \
+  --schedule-expression-timezone --start-date \
+  --end-date

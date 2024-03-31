@@ -34,8 +34,6 @@ managedNodeGroups:
       - sudo yum install amazon-ssm-agent -y
       - sudo systemctl enable amazon-ssm-agent
       - sudo systemctl start amazon-ssm-agent
-      - sudo yum install amazon-cloudwatch-agent -y
-      - sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c ssm:AmazonCloudwatch-linux
     iam:
       attachPolicyARNs:
         - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
@@ -44,6 +42,7 @@ managedNodeGroups:
         - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
         - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
         - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+        - arn:aws:iam::810918113647:policy/cluster-autoscaler
     privateNetworking: true
     releaseVersion: "1.29.0-20240129"
     updateConfig:

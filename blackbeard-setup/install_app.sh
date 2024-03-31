@@ -49,70 +49,70 @@ controlplane_logs () {
   echo -e "\n\n####################\nEKS update completed\n\n#######################"
 }
 
-cloudwatch_pod_logs () {
-  # prepare environment for sending pod logs to cloudwatch
-  prepare-environment observability/logging/pods
-}
+#cloudwatch_pod_logs () {
+#  # prepare environment for sending pod logs to cloudwatch
+#  prepare-environment observability/logging/pods
+#}
 
-opensearch () {
-  echo -e "\n\n###############\nSetup Opensearch\nThis may take up to 30 minutes\n\n#####################"
-  # prepare environment for using opensearch and sending application logs to opensearch
-  prepare-environment observability/opensearch
-  # get env values for opensearch access
-  export OPENSEARCH_HOST=$(aws ssm get-parameter \
-        --name /eksworkshop/$EKS_CLUSTER_NAME/opensearch/host \
-        --region $AWS_REGION | jq .Parameter.Value | tr -d '"')
+#opensearch () {
+#  echo -e "\n\n###############\nSetup Opensearch\nThis may take up to 30 minutes\n\n#####################"
+#  # prepare environment for using opensearch and sending application logs to opensearch
+#  prepare-environment observability/opensearch
+#  # get env values for opensearch access
+#  export OPENSEARCH_HOST=$(aws ssm get-parameter \
+#        --name /eksworkshop/$EKS_CLUSTER_NAME/opensearch/host \
+#        --region $AWS_REGION | jq .Parameter.Value | tr -d '"')
+#
+#  export OPENSEARCH_USER=$(aws ssm get-parameter \
+#        --name /eksworkshop/$EKS_CLUSTER_NAME/opensearch/user  \
+#        --region $AWS_REGION --with-decryption | jq .Parameter.Value | tr -d '"')
+#
+#  export OPENSEARCH_PASSWORD=$(aws ssm get-parameter \
+#        --name /eksworkshop/$EKS_CLUSTER_NAME/opensearch/password \
+#        --region $AWS_REGION --with-decryption | jq .Parameter.Value | tr -d '"')
+#
+#  export OPENSEARCH_DASHBOARD_FILE=~/environment/eks-workshop/modules/observability/opensearch/opensearch-dashboards.ndjson
+#
+#  # load pre-created dashboards to opensearch
+#  curl -s https://$OPENSEARCH_HOST/_dashboards/auth/login \
+#        -H 'content-type: application/json' -H 'osd-xsrf: osd-fetch' \
+#        --data-raw '{"username":"'"$OPENSEARCH_USER"'","password":"'"$OPENSEARCH_PASSWORD"'"}' \
+#        -c dashboards_cookie | jq .
+#  curl -s -X POST https://$OPENSEARCH_HOST/_dashboards/api/saved_objects/_import?overwrite=true \
+#          --form file=@$OPENSEARCH_DASHBOARD_FILE \
+#          -H "osd-xsrf: true" -b dashboards_cookie | jq .
+#
+#  # display login URL and creds for opensearch
+#  echo -e "\n\n\n############################# Opensearch URL and user########################\n\n"
+#  printf "\nOpenSearch dashboard: https://%s/_dashboards/app/dashboards \nUserName: %q \nPassword: %q \n\n" \
+#        "$OPENSEARCH_HOST" "$OPENSEARCH_USER" "$OPENSEARCH_PASSWORD"
+#  echo -e "\n\n#############################################################################\n\n"
+#
+#  #Install and configure filebeat to send application logs to opensearch
+#  helm repo add eks https://aws.github.io/eks-charts
+#  helm upgrade fluentbit eks/aws-for-fluent-bit --install \
+#      --namespace opensearch-exporter --create-namespace \
+#      -f ~/environment/eks-workshop/modules/observability/opensearch/config/fluentbit-values.yaml \
+#      --set="opensearch.host"="$OPENSEARCH_HOST" \
+#      --set="opensearch.awsRegion"=$AWS_REGION \
+#      --set="opensearch.httpUser"="$OPENSEARCH_USER" \
+#      --set="opensearch.httpPasswd"="$OPENSEARCH_PASSWORD" \
+#      --wait
+#  echo -e "\n\n####################\nOpensearch Setup Completed\n\n#######################"
+#}
 
-  export OPENSEARCH_USER=$(aws ssm get-parameter \
-        --name /eksworkshop/$EKS_CLUSTER_NAME/opensearch/user  \
-        --region $AWS_REGION --with-decryption | jq .Parameter.Value | tr -d '"')
-
-  export OPENSEARCH_PASSWORD=$(aws ssm get-parameter \
-        --name /eksworkshop/$EKS_CLUSTER_NAME/opensearch/password \
-        --region $AWS_REGION --with-decryption | jq .Parameter.Value | tr -d '"')
-
-  export OPENSEARCH_DASHBOARD_FILE=~/environment/eks-workshop/modules/observability/opensearch/opensearch-dashboards.ndjson
-
-  # load pre-created dashboards to opensearch
-  curl -s https://$OPENSEARCH_HOST/_dashboards/auth/login \
-        -H 'content-type: application/json' -H 'osd-xsrf: osd-fetch' \
-        --data-raw '{"username":"'"$OPENSEARCH_USER"'","password":"'"$OPENSEARCH_PASSWORD"'"}' \
-        -c dashboards_cookie | jq .
-  curl -s -X POST https://$OPENSEARCH_HOST/_dashboards/api/saved_objects/_import?overwrite=true \
-          --form file=@$OPENSEARCH_DASHBOARD_FILE \
-          -H "osd-xsrf: true" -b dashboards_cookie | jq .
-
-  # display login URL and creds for opensearch
-  echo -e "\n\n\n############################# Opensearch URL and user########################\n\n"
-  printf "\nOpenSearch dashboard: https://%s/_dashboards/app/dashboards \nUserName: %q \nPassword: %q \n\n" \
-        "$OPENSEARCH_HOST" "$OPENSEARCH_USER" "$OPENSEARCH_PASSWORD"
-  echo -e "\n\n#############################################################################\n\n"
-
-  #Install and configure filebeat to send application logs to opensearch
-  helm repo add eks https://aws.github.io/eks-charts
-  helm upgrade fluentbit eks/aws-for-fluent-bit --install \
-      --namespace opensearch-exporter --create-namespace \
-      -f ~/environment/eks-workshop/modules/observability/opensearch/config/fluentbit-values.yaml \
-      --set="opensearch.host"="$OPENSEARCH_HOST" \
-      --set="opensearch.awsRegion"=$AWS_REGION \
-      --set="opensearch.httpUser"="$OPENSEARCH_USER" \
-      --set="opensearch.httpPasswd"="$OPENSEARCH_PASSWORD" \
-      --wait
-  echo -e "\n\n####################\nOpensearch Setup Completed\n\n#######################"
-}
-
-managed_prometheus () {
-  echo -e "\n\n####################\nSetup observability with AMP\n\n#######################"
-  # Prepare environment for AMP (Amazon managed prometheus)
-  prepare-environment observability/oss-metrics
-  # setup adot to send metrics to AMP
-  kubectl kustomize ~/environment/eks-workshop/modules/observability/oss-metrics/adot | envsubst | kubectl apply -f-
-  echo -e "\n GRAFANA INGRESS URL:"
-  kubectl get ingress -n grafana grafana -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}'
-  echo -e "\nGRAFANA admin USER PASSWORD:\n"
-  kubectl get -n grafana secrets/grafana -o=jsonpath='{.data.admin-password}' | base64 -d
-  echo -e "\n\n####################\nAMP setup completed\n\n#######################"
-}
+#managed_prometheus () {
+#  echo -e "\n\n####################\nSetup observability with AMP\n\n#######################"
+#  # Prepare environment for AMP (Amazon managed prometheus)
+#  prepare-environment observability/oss-metrics
+#  # setup adot to send metrics to AMP
+#  kubectl kustomize ~/environment/eks-workshop/modules/observability/oss-metrics/adot | envsubst | kubectl apply -f-
+#  echo -e "\n GRAFANA INGRESS URL:"
+#  kubectl get ingress -n grafana grafana -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+#  echo -e "\nGRAFANA admin USER PASSWORD:\n"
+#  kubectl get -n grafana secrets/grafana -o=jsonpath='{.data.admin-password}' | base64 -d
+#  echo -e "\n\n####################\nAMP setup completed\n\n#######################"
+#}
 
 cloudwatch_metrics () {
   # prepare environment for sending metrics to cloudwatch
@@ -139,6 +139,10 @@ ack_dynamodb () {
   # check if dynamodb table created and is active
   kubectl wait table.dynamodb.services.k8s.aws items -n carts --for=condition=ACK.ResourceSynced --timeout=15m
   kubectl get table.dynamodb.services.k8s.aws items -n carts -ojson | yq '.status."tableStatus"'
+  # delete incluster dynamodb
+  kubectl delete -k ~/environment/eks-workshop/base-application/carts/deployment-db.yaml
+  kubectl delete -k ~/environment/eks-workshop/base-application/carts/service-db.yaml
+
   echo -e "\n\n####################\nManaged dynamodb created using ACK\n\n#######################"
 }
 
@@ -271,6 +275,10 @@ EOF
       --from-literal=password='beard!#black' --from-literal=username=admin --dry-run=client -o yaml | kubectl apply -f-
     # Update catalog app to use rds
     kubectl kustomize ~/environment/eks-workshop/modules/ack-rds/catalog-kustomize | envsubst | kubectl apply -f-
+    # delete in cluster catalog-mysql
+    kubectl delete -k ~/environment/eks-workshop/base-application/catalog/statefulset-mysql.yaml
+    kubectl delete -k ~/environment/eks-workshop/base-application/catalog/service-mysql.yaml
+
     echo -e "### RDS for catalog app created and application updated\n"
 
     ## create rds db instance for orders app
@@ -303,10 +311,98 @@ EOF
     cat ~/environment/eks-workshop/modules/ack-rds/orders-patch.yaml | envsubst  | kubectl apply -f-
     # Update catalog app to use rds
     kubectl kustomize ~/environment/eks-workshop/modules/ack-rds/orders-kustomize | envsubst | kubectl apply -f-
+    # delete incluster orders-mysql-db
+    kubectl delete -k ~/environment/eks-workshop/base-application/orders/deployment-mysql.yaml
+    kubectl delete -k ~/environment/eks-workshop/base-application/orders/service-mysql.yaml
     echo -e "### RDS for orders app created and application updated\n"
   fi
 }
 
+elasticache_redis () {
+  # get required variables to create subnet group and security group for redis
+  EKS_VPC_ID=$(aws eks describe-cluster --name="${EKS_CLUSTER_NAME}" --region $AWS_REGION \
+    --query "cluster.resourcesVpcConfig.vpcId" \
+    --output text)
+  EKS_SUBNET_IDS=$(aws ec2 describe-subnets --region $AWS_REGION \
+    --filters "Name=vpc-id,Values=${EKS_VPC_ID}" \
+    --query 'Subnets[*].SubnetId' \
+    --output text |  sed 's/\t/,/g' )
+  EKS_SUBNET_ID_LIST=$(echo "[$EKS_SUBNET_IDS]")
+  EKS_CIDR_RANGE=$(aws ec2 describe-vpcs \
+  	--vpc-ids $EKS_VPC_ID \
+  	--query "Vpcs[].CidrBlock" \
+  	--output text)
+  # create security group if it does not exist
+  REDIS_SECURITY_GROUP_ID=$(aws ec2 describe-security-groups --filters Name=vpc-id,Values=$EKS_VPC_ID Name=group-name,Values=redis-sg  \
+    --region $AWS_REGION \
+    --query 'SecurityGroups[].GroupId'  --output text)
+  if [[ -z "$REDIS_SECURITY_GROUP_ID" ]]; then
+    REDIS_SECURITY_GROUP_ID=$(aws ec2 create-security-group --region $AWS_REGION  \
+    	--group-name "redis-sg" \
+    	--description "allow access to redis from EKS" \
+    	--vpc-id "${EKS_VPC_ID}" \
+    	--output text)
+    aws ec2 authorize-security-group-ingress --region $AWS_REGION \
+    	 --group-id "${REDIS_SECURITY_GROUP_ID}" \
+    	 --protocol tcp \
+    	 --port 6379 \
+    	 --cidr "${EKS_CIDR_RANGE}"
+  fi
+
+  # Use terraform to create elasticache redis
+  echo -e "##################### Creating elasticache redis using terraform\n\n"
+  export TF_VAR_eks_cluster_id="$EKS_CLUSTER_NAME"
+  export TF_VAR_cluster_subnet_ids=$EKS_SUBNET_ID_LIST
+  export TF_VAR_redis_security_group=$REDIS_SECURITY_GROUP_ID
+
+  tf_dir=$(realpath --relative-to="$PWD" "~/environment/eks-workshop/modules/elasticache-redis")
+
+  terraform -chdir="$tf_dir" init -backend-config=backend.conf -upgrade
+  terraform -chdir="$tf_dir" apply -refresh=false --auto-approve
+
+  echo -e "###################### Elasticache redis created.\n\n"
+
+  kubectl kustomize ~/environment/eks-workshop/modules/elasticache-redis/manifests | envsubst | kubectl apply -f-
+
+  echo -e "######## checkout app updated to use new redis"
+
+  # delete incluster checkout-redis
+  kubectl delete -k ~/environment/eks-workshop/base-application/orders/deployment-redis.yaml
+  kubectl delete -k ~/environment/eks-workshop/base-application/orders/service-redisl.yaml
+
+}
+
+cloudwatch_logs_v1 () {
+  # Create namespace
+  kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cloudwatch-namespace.yaml
+
+  # Create configmap
+  FluentBitHttpPort='2020'
+  FluentBitReadFromHead='Off'
+  [[ ${FluentBitReadFromHead} = 'On' ]] && FluentBitReadFromTail='Off'|| FluentBitReadFromTail='On'
+  [[ -z ${FluentBitHttpPort} ]] && FluentBitHttpServer='Off' || FluentBitHttpServer='On'
+  kubectl create configmap fluent-bit-cluster-info \
+  --from-literal=cluster.name=${$EKS_CLUSTER_NAME} \
+  --from-literal=http.server=${FluentBitHttpServer} \
+  --from-literal=http.port=${FluentBitHttpPort} \
+  --from-literal=read.head=${FluentBitReadFromHead} \
+  --from-literal=read.tail=${FluentBitReadFromTail} \
+  --from-literal=logs.region=${AWS_REGION} -n amazon-cloudwatch
+  # deploy fluent bit daemonset
+  kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/fluent-bit/fluent-bit.yaml
+
+  ## send container insights metrics to cloudwatch
+  # Create a service account
+  kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cwagent/cwagent-serviceaccount.yaml
+
+  # create configmap
+  curl  https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cwagent/cwagent-configmap.yaml \
+   | sed "s/{{cluster_name}}/$EKS_CLUSTER_NAME/g" | kubectl apply -f-
+
+  # deploy cwagent daemonset
+  kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cwagent/cwagent-daemonset.yaml
+
+}
 
 if [ "$DESTROY" == "true" ]
 then
@@ -326,27 +422,30 @@ then
   for module in automation/controlplanes/ack observability/container-insights observability/oss-metrics observability/opensearch observability/logging/pods observability/logging/cluster exposing/ingress
   do
     echo -e "\n############################REMVOING LAB MODULE: $module \n############################\n"
-    if [ -f "/eks-workshop/hooks/$module/cleanup.sh" ]; then
-      bash /eks-workshop/hooks/$module/cleanup.sh
+    if [ -f "/eks-workshop/hooks/${EKS_CLUSTER_NAME}/$module/cleanup.sh" ]; then
+      bash /eks-workshop/hooks/${EKS_CLUSTER_NAME}/${module}/cleanup.sh
     fi
-    tf_dir=$(realpath --relative-to="$PWD" "/eks-workshop/terraform/$module")
+    tf_dir=$(realpath --relative-to="$PWD" "/eks-workshop/terraform/${EKS_CLUSTER_NAME}/$module")
     terraform -chdir="$tf_dir" init -upgrade
     terraform -chdir="$tf_dir" destroy --auto-approve
-    rm -rf /eks-workshop/terraform/$module/addon*.tf
-    rm -rf /eks-workshop/hooks/$module
+    rm -rf /eks-workshop/terraform/${EKS_CLUSTER_NAME}/${module}/addon*.tf
+    rm -rf /eks-workshop/hooks/${EKS_CLUSTER_NAME}/${module}
   done
   echo -e "\n############################REMVOING BASE APPLICATION \n############################\n"
-  kubectl delete -k /eks-workshop/manifests/base-application
   kubectl delete -k ~/environment/eks-workshop/modules/exposing/ingress/creating-ingress
+  kubectl delete -k ~/environment/eks-workshop/base-application
+
   eksctl delete cluster --name=$EKS_CLUSTER_NAME --region=$AWS_REGION
 else
   base_application
   ingress
   controlplane_logs
-  cloudwatch_pod_logs
-  opensearch
-  managed_prometheus
-  cloudwatch_metrics
+#  cloudwatch_pod_logs
+#  opensearch
+#  managed_prometheus
+#  cloudwatch_metrics
   ack_dynamodb
   ack_rds
+  elasticache_redis
+  cloudwatch_logs_v1
 fi
