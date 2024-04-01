@@ -5,7 +5,7 @@ metadata:
   namespace: "${APP_NAMESPACE}"
 spec:
   allocatedStorage: 20
-  dbInstanceClass: db.m4.large
+  dbInstanceClass: db.t3.medium
   dbName: $RDS_DB_NAME
   enableCloudwatchLogsExports: ["error","general","audit","slowquery"]
   dbInstanceIdentifier: "${RDS_INSTANCE_NAME}"

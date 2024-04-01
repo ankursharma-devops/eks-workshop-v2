@@ -1,10 +1,4 @@
-variable "cluster_subnet_ids" {
-  type = list(string)
-}
 
-variable "redis_security_group" {
-  type = string
-}
 
 provider "aws" {
   region = "us-east-1"
@@ -17,7 +11,8 @@ resource "aws_elasticache_subnet_group" "redis_subnet_group" {
 }
 
 resource "aws_cloudwatch_log_group" "checkout_redis" {
-  name = "aws-redis"
+  name              = "aws-redis"
+  retention_in_days = 3
 }
 
 resource "aws_elasticache_cluster" "checkout_redis" {
@@ -29,8 +24,8 @@ resource "aws_elasticache_cluster" "checkout_redis" {
   apply_immediately = true
 	subnet_group_name = aws_elasticache_subnet_group.redis_subnet_group.name
 	security_group_ids = var.redis_security_group
-	engine_version     = 6.0.5
-	parameter_group_name = default.redis6.x
+	engine_version     = "6.0"
+	parameter_group_name = "default.redis6.x"
   log_delivery_configuration {
     destination      = aws_cloudwatch_log_group.checkout_redis.name
     destination_type = "cloudwatch-logs"

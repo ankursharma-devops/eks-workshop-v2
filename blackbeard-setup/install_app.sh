@@ -140,8 +140,8 @@ ack_dynamodb () {
   kubectl wait table.dynamodb.services.k8s.aws items -n carts --for=condition=ACK.ResourceSynced --timeout=15m
   kubectl get table.dynamodb.services.k8s.aws items -n carts -ojson | yq '.status."tableStatus"'
   # delete incluster dynamodb
-  kubectl delete -k ~/environment/eks-workshop/base-application/carts/deployment-db.yaml
-  kubectl delete -k ~/environment/eks-workshop/base-application/carts/service-db.yaml
+  kubectl delete -f ~/environment/eks-workshop/base-application/carts/deployment-db.yaml
+  kubectl delete -f ~/environment/eks-workshop/base-application/carts/service-db.yaml
 
   echo -e "\n\n####################\nManaged dynamodb created using ACK\n\n#######################"
 }
@@ -176,9 +176,9 @@ ack_rds () {
   else
     echo -e "\n\n####################\nSetup RDS MYSQL instance using ACK operator\n\n#######################"
     # generate required variables
-    RDS_NAMESPACE=rds-ack
-    RDS_SUBNET_GROUP_NAME="ack-rds-subnet-group"
-    RDS_SUBNET_GROUP_DESCRIPTION="RDS subnet group"
+    export RDS_NAMESPACE=rds-ack
+    export RDS_SUBNET_GROUP_NAME="ack-rds-subnet-group"
+    export RDS_SUBNET_GROUP_DESCRIPTION="RDS subnet group"
     EKS_VPC_ID=$(aws eks describe-cluster --name="${EKS_CLUSTER_NAME}" --region $AWS_REGION \
      --query "cluster.resourcesVpcConfig.vpcId" \
      --output text)
@@ -227,26 +227,30 @@ EOF
         sleep 10s
       fi
     done
-    # create security group and add inbound traffic rule
-    RDS_SECURITY_GROUP_ID=$(aws ec2 create-security-group --region $AWS_REGION  \
-      --group-name "${RDS_SUBNET_GROUP_NAME}" \
-      --description "${RDS_SUBNET_GROUP_DESCRIPTION}" \
-      --vpc-id "${EKS_VPC_ID}" \
-      --output text)
-    aws ec2 authorize-security-group-ingress --region $AWS_REGION \
-       --group-id "${RDS_SECURITY_GROUP_ID}" \
-       --protocol tcp \
-       --port 3306 \
-       --cidr "${EKS_CIDR_RANGE}"
-
+    # create security group if it does not exist
+    export RDS_SECURITY_GROUP_ID=$(aws ec2 describe-security-groups --filters Name=vpc-id,Values=$EKS_VPC_ID Name=group-name,Values=${RDS_SUBNET_GROUP_NAME}  \
+      --region $AWS_REGION \
+      --query 'SecurityGroups[].GroupId'  --output text)
+    if [[ -z "$RDS_SECURITY_GROUP_ID" ]]; then
+      export RDS_SECURITY_GROUP_ID=$(aws ec2 create-security-group --region $AWS_REGION  \
+        --group-name "${RDS_SUBNET_GROUP_NAME}" \
+        --description "${RDS_SUBNET_GROUP_DESCRIPTION}" \
+        --vpc-id "${EKS_VPC_ID}" \
+        --output text)
+      aws ec2 authorize-security-group-ingress --region $AWS_REGION \
+         --group-id "${RDS_SECURITY_GROUP_ID}" \
+         --protocol tcp \
+         --port 3306 \
+         --cidr "${EKS_CIDR_RANGE}"
+    fi
 
     ## create rds db instance for catalog app
     ##
 
     echo -e "###  Creating RDS postgresql for catalog app \n"
-    RDS_INSTANCE_NAME="catalog-ack-mysql"
-    APP_NAMESPACE="catalog"
-    DB_ENGINE="mysql"
+    export RDS_INSTANCE_NAME="catalog-ack-mysql"
+    export APP_NAMESPACE="catalog"
+    export DB_ENGINE="mysql"
     export RDS_DB_NAME="catalog"
     # Set password for DB
     #
@@ -255,6 +259,10 @@ EOF
     # create instance
     #
     cat ~/environment/eks-workshop/modules/ack-rds/rds-mysql.yaml | envsubst  | kubectl apply -f-
+    if [ $? -ne 0 ]; then
+      echo " DB instance creation failed."
+      exit 1
+    fi
     # wait for rds to create and generate endpoint
     #
     for i in $(seq 10)
@@ -269,30 +277,30 @@ EOF
       fi
     done
     #
-    RDS_DB_ENDPOINT=$(kubectl get dbinstance $RDS_INSTANCE_NAME -n ${APP_NAMESPACE} -o json | jq -r '.status.endpoint.address')
+    export RDS_DB_ENDPOINT=$(kubectl get dbinstance $RDS_INSTANCE_NAME -n ${APP_NAMESPACE} -o json | jq -r '.status.endpoint.address')
     cat ~/environment/eks-workshop/modules/ack-rds/catalog-patch.yaml | envsubst  | kubectl apply -f-
     kubectl create secret generic -n $APP_NAMESPACE "catalog-db-ack" \
       --from-literal=password='beard!#black' --from-literal=username=admin --dry-run=client -o yaml | kubectl apply -f-
     # Update catalog app to use rds
     kubectl kustomize ~/environment/eks-workshop/modules/ack-rds/catalog-kustomize | envsubst | kubectl apply -f-
     # delete in cluster catalog-mysql
-    kubectl delete -k ~/environment/eks-workshop/base-application/catalog/statefulset-mysql.yaml
-    kubectl delete -k ~/environment/eks-workshop/base-application/catalog/service-mysql.yaml
+    kubectl delete -f ~/environment/eks-workshop/base-application/catalog/statefulset-mysql.yaml -n catalog
+    kubectl delete -f ~/environment/eks-workshop/base-application/catalog/service-mysql.yaml -n catalog
 
     echo -e "### RDS for catalog app created and application updated\n"
 
     ## create rds db instance for orders app
     ##
     echo -e "###  Creating RDS postgresql for orders app \n"
-    RDS_INSTANCE_NAME="orders-ack-mysql"
-    APP_NAMESPACE="orders"
-    DB_ENGINE="mysql"
+    export RDS_INSTANCE_NAME="orders-ack-mysql"
+    export APP_NAMESPACE="orders"
+    export DB_ENGINE="mysql"
     export RDS_DB_NAME="orders"
     # set password for db
     kubectl create secret generic -n $APP_NAMESPACE "${RDS_INSTANCE_NAME}-password" \
     --from-literal=password='beard!#black'
     # create instance
-    cat ~/environment/eks-workshop/modules/ack-rds/rds-mysql.yaml | envsubst  | kubectl apply -f-
+    cat ~/environment/eks-workshop/modules/ack-rds/rds-mysql.yaml | envsubst | kubectl apply -f-
     # wait for rds to create and generate endpoint
     for i in $(seq 10)
     do
@@ -311,14 +319,19 @@ EOF
     cat ~/environment/eks-workshop/modules/ack-rds/orders-patch.yaml | envsubst  | kubectl apply -f-
     # Update catalog app to use rds
     kubectl kustomize ~/environment/eks-workshop/modules/ack-rds/orders-kustomize | envsubst | kubectl apply -f-
+    if [ $? -ne 0 ]; then
+      echo " DB instance creation failed."
+      exit 1
+    fi
     # delete incluster orders-mysql-db
-    kubectl delete -k ~/environment/eks-workshop/base-application/orders/deployment-mysql.yaml
-    kubectl delete -k ~/environment/eks-workshop/base-application/orders/service-mysql.yaml
+    kubectl delete -f ~/environment/eks-workshop/base-application/orders/deployment-mysql.yaml -n orders
+    kubectl delete -f ~/environment/eks-workshop/base-application/orders/service-mysql.yaml -n orders
     echo -e "### RDS for orders app created and application updated\n"
   fi
 }
 
 elasticache_redis () {
+  echo -e "\n\n####################\nSetup Elasticache Redis\n\n#######################"
   # get required variables to create subnet group and security group for redis
   EKS_VPC_ID=$(aws eks describe-cluster --name="${EKS_CLUSTER_NAME}" --region $AWS_REGION \
     --query "cluster.resourcesVpcConfig.vpcId" \
@@ -326,7 +339,7 @@ elasticache_redis () {
   EKS_SUBNET_IDS=$(aws ec2 describe-subnets --region $AWS_REGION \
     --filters "Name=vpc-id,Values=${EKS_VPC_ID}" \
     --query 'Subnets[*].SubnetId' \
-    --output text |  sed 's/\t/,/g' )
+    --output text |  sed 's/\t/,/g' | sed 's/,/","/g' | sed 's/$/"/g' | sed 's/^/"/g' )
   EKS_SUBNET_ID_LIST=$(echo "[$EKS_SUBNET_IDS]")
   EKS_CIDR_RANGE=$(aws ec2 describe-vpcs \
   	--vpc-ids $EKS_VPC_ID \
@@ -351,14 +364,19 @@ elasticache_redis () {
 
   # Use terraform to create elasticache redis
   echo -e "##################### Creating elasticache redis using terraform\n\n"
-  export TF_VAR_eks_cluster_id="$EKS_CLUSTER_NAME"
-  export TF_VAR_cluster_subnet_ids=$EKS_SUBNET_ID_LIST
-  export TF_VAR_redis_security_group=$REDIS_SECURITY_GROUP_ID
 
-  tf_dir=$(realpath --relative-to="$PWD" "~/environment/eks-workshop/modules/elasticache-redis")
+  tf_dir=$(realpath --relative-to="$PWD" "$HOME/environment/eks-workshop/modules/elasticache-redis/.workshop/terraform")
+
+  echo "eks_cluster_id = \"$EKS_CLUSTER_NAME\"" > $tf_dir/input.tfvars
+  echo "cluster_subnet_ids = $EKS_SUBNET_ID_LIST" >> $tf_dir/input.tfvars
+  echo "redis_security_group = [\"$REDIS_SECURITY_GROUP_ID\"]" >> $tf_dir/input.tfvars
 
   terraform -chdir="$tf_dir" init -backend-config=backend.conf -upgrade
-  terraform -chdir="$tf_dir" apply -refresh=false --auto-approve
+  terraform -chdir="$tf_dir" apply -refresh=false -var-file=input.tfvars --auto-approve
+  if [ $? -ne 0 ]; then
+    echo " Terraform apply failed."
+    exit 1
+  fi
 
   echo -e "###################### Elasticache redis created.\n\n"
 
@@ -367,8 +385,8 @@ elasticache_redis () {
   echo -e "######## checkout app updated to use new redis"
 
   # delete incluster checkout-redis
-  kubectl delete -k ~/environment/eks-workshop/base-application/orders/deployment-redis.yaml
-  kubectl delete -k ~/environment/eks-workshop/base-application/orders/service-redisl.yaml
+  kubectl delete -f ~/environment/eks-workshop/base-application/checkout/deployment-redis.yaml -n checkout
+  kubectl delete -f ~/environment/eks-workshop/base-application/checkout/service-redis.yaml -n checkout
 
 }
 
@@ -382,7 +400,7 @@ cloudwatch_logs_v1 () {
   [[ ${FluentBitReadFromHead} = 'On' ]] && FluentBitReadFromTail='Off'|| FluentBitReadFromTail='On'
   [[ -z ${FluentBitHttpPort} ]] && FluentBitHttpServer='Off' || FluentBitHttpServer='On'
   kubectl create configmap fluent-bit-cluster-info \
-  --from-literal=cluster.name=${$EKS_CLUSTER_NAME} \
+  --from-literal=cluster.name=${EKS_CLUSTER_NAME} \
   --from-literal=http.server=${FluentBitHttpServer} \
   --from-literal=http.port=${FluentBitHttpPort} \
   --from-literal=read.head=${FluentBitReadFromHead} \
@@ -390,7 +408,7 @@ cloudwatch_logs_v1 () {
   --from-literal=logs.region=${AWS_REGION} -n amazon-cloudwatch
   # deploy fluent bit daemonset
   curl https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/fluent-bit/fluent-bit.yaml \
-   | sed "s/cloudwatch_logs/cloudwatch_logs\\n\\tlog_retention_days\\t3/g" | kubectl apply -f-
+   | sed "s/cloudwatch_logs/cloudwatch_logs\\n        log_retention_days        3/g" | kubectl apply -f-
 
   ## send container insights metrics to cloudwatch
   # Create a service account
@@ -441,10 +459,10 @@ else
   base_application
   ingress
   controlplane_logs
-#  cloudwatch_pod_logs
-#  opensearch
-#  managed_prometheus
-#  cloudwatch_metrics
+  cloudwatch_pod_logs
+  opensearch
+  managed_prometheus
+  cloudwatch_metrics
   ack_dynamodb
   ack_rds
   elasticache_redis

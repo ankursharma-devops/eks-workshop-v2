@@ -12,3 +12,4 @@ spec:
             - configMapRef:
                 name: carts-ack
       serviceAccountName: carts-ack
+#        image: 810918113647.dkr.ecr.us-west-2.amazonaws.com/carts:0.4.0-test
