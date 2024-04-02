@@ -459,9 +459,9 @@ else
   base_application
   ingress
   controlplane_logs
-  cloudwatch_pod_logs
-  opensearch
-  managed_prometheus
+#  cloudwatch_pod_logs
+#  opensearch
+#  managed_prometheus
   cloudwatch_metrics
   ack_dynamodb
   ack_rds
