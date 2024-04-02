@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: load-gen
+  namespace: load-gen
+spec:
+  template:
+    spec:
+      containers:
+      - name: artillery
+        image: artilleryio/artillery:2.0.0-31
+        args:
+        - "run"
+        - "-t"
+        - "http://ui.ui.svc"
+        - "/scripts/scenario.yml"
+        volumeMounts:
+        - name: scripts
+          mountPath: "/scripts"
+          readOnly: true
+      volumes:
+      - name: scripts
+        configMap:
+          name: load-gen
+          items:
+          - key: "scenario.yml"
+            path: "scenario.yml"
+          - key: "helpers.js"
+            path: "helpers.js"
+      restartPolicy: Never
+  backoffLimit: 4
