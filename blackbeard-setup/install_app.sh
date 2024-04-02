@@ -407,8 +407,13 @@ cloudwatch_logs_v1 () {
   --from-literal=read.tail=${FluentBitReadFromTail} \
   --from-literal=logs.region=${AWS_REGION} -n amazon-cloudwatch
   # deploy fluent bit daemonset
-  curl https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/fluent-bit/fluent-bit.yaml \
-   | sed "s/cloudwatch_logs/cloudwatch_logs\\n        log_retention_days        3/g" | kubectl apply -f-
+  #curl https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/fluent-bit/fluent-bit.yaml \
+  #| sed "s/cloudwatch_logs/cloudwatch_logs\\n        log_retention_days        3/g" | kubectl apply -f-
+   curl https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/fluent-bit/fluent-bit.yaml \
+    | sed "s/cloudwatch_logs/cloudwatch_logs\\n        log_retention_days        3/g"  \
+    | sed -e '/application-log.conf:/{n;n;n;n;n;n;n;n;n;n;n;n;n;n;N;N;N;N;N;N;N;N;N;N;N;N;N;N;N;N;N;N;N;N;N;d}' \
+    | sed 's/\/var\/log\/containers\/cloudwatch-agent/\/var\/log\/containers\/load-gen*, \/var\/log\/containers\/cloudwatch-agent/g' \
+    | kubectl apply -f-
 
   ## send container insights metrics to cloudwatch
   # Create a service account
